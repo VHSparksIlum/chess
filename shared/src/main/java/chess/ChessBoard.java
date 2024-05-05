@@ -11,8 +11,12 @@ import java.util.Objects;
  */
 public class ChessBoard {
     private ChessPiece[][] board = new ChessPiece[8][8];
+    // Constants for the number of rows and columns on the chessboard
+    private static final int NUM_ROWS = 8;
+    private static final int NUM_COLUMNS = 8;
+
     public ChessBoard() {
-        
+        this.board = new ChessPiece[8][8];
     }
 
     /**
@@ -22,7 +26,23 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        board[position.getRow()][position.getColumn()] = piece;
+        //board[position.getRow()][position.getColumn()] = piece;
+        int row = position.getRow(); // Use 1-based indexing
+        int col = position.getColumn(); // Use 1-based indexing
+
+        // Print a message to track the addition of a piece
+        // System.out.println("Adding " + piece.getPieceType() + " to position " + position);
+
+        this.board[row - 1][col - 1] = piece; // Add the piece to the board
+    }
+
+    public void removePiece(ChessPosition position) {
+        int row = position.getRow(); // Use 1-based indexing
+        int col = position.getColumn(); // Use 1-based indexing
+        this.board[row - 1][col - 1] = null; // Clear the position on the board
+
+        //System.out.println("Removing piece at position " + position);
+
     }
 
     /**
@@ -33,7 +53,27 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        return board[position.getRow()][position.getColumn()];
+        //return board[position.getRow()][position.getColumn()];
+        int row = position.getRow(); // Use 1-based indexing
+        int col = position.getColumn(); // Use 1-based indexing
+//        ChessPiece piece = this.board[row - 1][col - 1];
+
+        // Debug statement to log information about the piece
+//        if (piece != null) {
+//            System.out.println("Getting piece at position " + position + ": " + piece.getTeamColor() + " " + piece.getPieceType());
+//        } else {
+//            System.out.println("Getting piece at position " + position + ": null");
+//        }
+
+        return this.board[row - 1][col - 1]; // Retrieve the piece from the board
+    }
+
+    /**
+     * Checks whether the attempted piece move is on the board parameters
+     * (Accounting for difference in array indices range)
+     */
+    public boolean isOnBoard(int row, int col) {
+        return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
 
     /**
