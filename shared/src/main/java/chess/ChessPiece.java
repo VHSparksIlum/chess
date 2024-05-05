@@ -13,6 +13,8 @@ import java.util.List;
 public class ChessPiece {
     private final ChessGame.TeamColor teamColor;
     private final PieceType type;
+//    private final ChessGame.TeamColor oppositeTeamColor; //possible code for king castling
+//    private boolean hasMoved;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.teamColor = pieceColor;
@@ -88,6 +90,27 @@ public class ChessPiece {
                         }
                     } else {
                         break; // Stop searching in this direction if the position is off the board
+                    }
+                }
+            }
+        }
+        else if(getPieceType() == PieceType.KING) {
+            // Define the eight possible directions a king can move
+            int[] rowDirections = { -1, -1, -1, 0, 0, 1, 1, 1 };
+            int[] colDirections = { -1, 0, 1, -1, 1, -1, 0, 1 };
+
+            for (int i = 0; i < 8; i++) {
+                int newRow = myRow + rowDirections[i];
+                int newCol = myCol + colDirections[i];
+                ChessPosition newPosition = new ChessPosition(newRow, newCol);
+
+                // Check if the new position is on the chessboard
+                if (board.isOnBoard(newRow, newCol)) {
+                    ChessPiece targetPiece = board.getPiece(newPosition);
+
+                    // If the target square is empty or contains an opponent's piece, it's a valid move
+                    if (targetPiece == null || targetPiece.getTeamColor() != teamColor) {
+                        validMoves.add(new ChessMove(myPosition, newPosition));
                     }
                 }
             }
