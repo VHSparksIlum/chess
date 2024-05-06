@@ -52,8 +52,9 @@ public class ChessPiece {
 
     /**
      * @return whether capture is within board boundaries AND the target square contains an opponent piece
+     * for pawns
      */
-    private boolean isValidCapture(ChessBoard board, ChessPosition position) {
+    private boolean isValidPawnCapture(ChessBoard board, ChessPosition position) {
         ChessPiece targetPiece = board.getPiece(position);
         return board.isOnBoard(position.getRow(), position.getColumn()) &&
                 targetPiece != null &&
@@ -61,10 +62,36 @@ public class ChessPiece {
     }
 
     /**
-     * @return whether the move is within  board boundaries AND the target square is empty
+     * @return whether the move is within board boundaries AND the target square is empty
+     * for pawns
      */
-    private boolean isValidMove(ChessBoard board, ChessPosition position) {
+    private boolean isValidPawnMove(ChessBoard board, ChessPosition position) {
         return board.isOnBoard(position.getRow(), position.getColumn()) && board.getPiece(position) == null;
+    }
+
+    /**
+     * @return whether capture is within board boundaries AND the target square contains an opponent piece
+     * for queen
+     */
+    private boolean isValidQueenCapture(ChessBoard board, ChessPosition position) {
+        ChessPiece targetPiece = board.getPiece(position);
+        return board.isOnBoard(position.getRow(), position.getColumn()) &&
+                targetPiece != null &&
+                targetPiece.getTeamColor() != teamColor;
+    }
+
+    /**
+     * @return whether the move is within board boundaries AND the target square is empty
+     * for queen
+     */
+    private boolean isValidQueenMove(ChessBoard board, ChessPosition position) {
+        if (!board.isOnBoard(position.getRow(), position.getColumn())) {
+            return false;
+        }
+
+        // Check if the target square is empty or contains an opponent's piece
+        ChessPiece targetPiece = board.getPiece(position);
+        return targetPiece == null || targetPiece.getTeamColor() != teamColor;
     }
 
     /**
@@ -194,7 +221,7 @@ public class ChessPiece {
                         break;
                     }
                 }
-                if (isValidMove(board, twoSquaresForward) && squaresBetweenEmpty) {
+                if (isValidPawnMove(board, twoSquaresForward) && squaresBetweenEmpty) {
                     validMoves.add(new ChessMove(myPosition, twoSquaresForward, null));
                 }
             }
@@ -204,7 +231,7 @@ public class ChessPiece {
             int captureLeftColumn = myPosition.getColumn() - 1;
             if (board.isOnBoard(captureLeftRow, captureLeftColumn)) {
                 ChessPosition captureLeft = new ChessPosition(captureLeftRow, captureLeftColumn);
-                if (isValidCapture(board, captureLeft)) {
+                if (isValidPawnCapture(board, captureLeft)) {
                     // Check if the pawn reaches the back row of the opposing team
                     int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
                     if (captureLeftRow == backRow) {
@@ -224,7 +251,7 @@ public class ChessPiece {
             int captureRightColumn = myPosition.getColumn() + 1;
             if (board.isOnBoard(captureRightRow, captureRightColumn)) {
                 ChessPosition captureRight = new ChessPosition(captureRightRow, captureRightColumn);
-                if (isValidCapture(board, captureRight)) {
+                if (isValidPawnCapture(board, captureRight)) {
                     // Check if the pawn reaches the back row of the opposing team
                     int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
                     if (captureRightRow == backRow) {
@@ -235,6 +262,34 @@ public class ChessPiece {
                         validMoves.add(new ChessMove(myPosition, captureRight, PieceType.ROOK));
                     } else {
                         validMoves.add(new ChessMove(myPosition, captureRight, null));
+                    }
+                }
+            }
+        }
+        else if(getPieceType() == PieceType.QUEEN) {
+            // The Queen can move in eight directions: up, down, left, right, and the four diagonals.
+            int[][] directions = {
+                    { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, // Rook-like movements
+                    { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } // Bishop-like movements
+            };
+
+            for (int[] direction : directions) {
+                int rowDelta = direction[0];
+                int colDelta = direction[1];
+
+                for (int i = 1; i <= 7; i++) { // Check up to 7 squares in each direction
+                    ChessPosition newPosition = new ChessPosition(myPosition.getRow() + i * rowDelta, myPosition.getColumn() + i * colDelta);
+
+                    if (!isValidQueenMove(board, newPosition)) {
+                        break;
+                    }
+
+                    validMoves.add(new ChessMove(myPosition, newPosition, null));
+
+                    // Check if the move captures an opponent's piece
+                    if (isValidQueenCapture(board, newPosition)) {
+                        //validMoves.add(new Move(myPosition, newPosition, board.getPiece(newPosition).getPieceType()));
+                        break; // Stop if a capture occurs
                     }
                 }
             }
