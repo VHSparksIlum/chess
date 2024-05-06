@@ -115,8 +115,33 @@ public class ChessPiece {
                 }
             }
         }
+        else if(getPieceType() == PieceType.KNIGHT) {
+            // Define the valid "L" shape moves from the Knight's position
+            int[][] knightMoves = {
+                    {-2, -1}, {-2, 1},
+                    {-1, -2}, {-1, 2},
+                    {1, -2}, {1, 2},
+                    {2, -1}, {2, 1}
+            };
+
+            for (int[] move : knightMoves) {
+                int newRow = myRow + move[0];
+                int newCol = myCol + move[1];
+
+                // Check if the new position is within the board bounds using isOnBoard
+                if (board.isOnBoard(newRow, newCol)) {
+                    ChessPosition newPosition = new ChessPosition(newRow, newCol);
+                    ChessPiece targetPiece = board.getPiece(newPosition);
+
+                    // Knights can jump over other pieces, so no need to check for obstructions
+                    if (targetPiece == null || targetPiece.getTeamColor() != teamColor) {
+                        validMoves.add(new ChessMove(myPosition, newPosition));
+                    }
+                }
+            }
+        }
         else {
-            throw new RuntimeException("Not BISHOP");
+            throw new RuntimeException("Unknown PieceType: " + getPieceType());
         }
         return validMoves;
     }
