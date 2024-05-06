@@ -13,7 +13,7 @@ import java.util.List;
 public class ChessPiece {
     private final ChessGame.TeamColor teamColor;
     private final PieceType type;
-//    private final ChessGame.TeamColor oppositeTeamColor; //possible code for king castling
+//    private final ChessGame.TeamColor oppositeTeamColor; //possible code for extra credit moves
 //    private boolean hasMoved;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
@@ -48,6 +48,23 @@ public class ChessPiece {
      */
     public PieceType getPieceType() {
         return type;
+    }
+
+    /**
+     * @return whether capture is within board boundaries AND the target square contains an opponent piece
+     */
+    private boolean isValidCapture(ChessBoard board, ChessPosition position) {
+        ChessPiece targetPiece = board.getPiece(position);
+        return board.isOnBoard(position.getRow(), position.getColumn()) &&
+                targetPiece != null &&
+                targetPiece.getTeamColor() != teamColor;
+    }
+
+    /**
+     * @return whether the move is within  board boundaries AND the target square is empty
+     */
+    private boolean isValidMove(ChessBoard board, ChessPosition position) {
+        return board.isOnBoard(position.getRow(), position.getColumn()) && board.getPiece(position) == null;
     }
 
     /**
@@ -136,6 +153,88 @@ public class ChessPiece {
                     // Knights can jump over other pieces, so no need to check for obstructions
                     if (targetPiece == null || targetPiece.getTeamColor() != teamColor) {
                         validMoves.add(new ChessMove(myPosition, newPosition));
+                    }
+                }
+            }
+        }
+        else if(getPieceType() == PieceType.PAWN) {
+            // Determine the direction of pawn movement based on its team color
+            int direction = (teamColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
+
+            // Move one square forward
+            int newRow = myPosition.getRow() + direction;
+            int newColumn = myPosition.getColumn();
+            if (board.isOnBoard(newRow, newColumn) && board.getPiece(new ChessPosition(newRow, newColumn)) == null) {
+                // Check if the pawn reaches the back row of the opposing team
+                int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
+                if (newRow == backRow) {
+                    // Add the move four times for promotion (BISHOP, KNIGHT, QUEEN, ROOK)
+                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), PieceType.BISHOP));
+                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), PieceType.KNIGHT));
+                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), PieceType.QUEEN));
+                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), PieceType.ROOK));
+                } else {
+                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), null));
+                }
+            }
+
+            // Initial two-square move (only allowed from starting position and not blocked)
+            if (((teamColor == ChessGame.TeamColor.WHITE && myPosition.getRow() == 2) ||
+                    (teamColor == ChessGame.TeamColor.BLACK && myPosition.getRow() == 7))) {
+                int newRow2 = myPosition.getRow() + 2 * direction;
+                int newColumn2 = myPosition.getColumn(); // Updated this line
+                ChessPosition twoSquaresForward = new ChessPosition(newRow2, newColumn2);
+
+                // Check if squares in between are empty
+                boolean squaresBetweenEmpty = true;
+                for (int i = myPosition.getRow() + direction; i != newRow2; i += direction) {
+                    ChessPosition positionBetween = new ChessPosition(i, newColumn2);
+                    if (board.getPiece(positionBetween) != null) {
+                        squaresBetweenEmpty = false;
+                        break;
+                    }
+                }
+                if (isValidMove(board, twoSquaresForward) && squaresBetweenEmpty) {
+                    validMoves.add(new ChessMove(myPosition, twoSquaresForward, null));
+                }
+            }
+
+            // Capture diagonally left
+            int captureLeftRow = myPosition.getRow() + direction;
+            int captureLeftColumn = myPosition.getColumn() - 1;
+            if (board.isOnBoard(captureLeftRow, captureLeftColumn)) {
+                ChessPosition captureLeft = new ChessPosition(captureLeftRow, captureLeftColumn);
+                if (isValidCapture(board, captureLeft)) {
+                    // Check if the pawn reaches the back row of the opposing team
+                    int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
+                    if (captureLeftRow == backRow) {
+                        // Add the move four times for promotion (BISHOP, KNIGHT, QUEEN, ROOK)
+                        validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.BISHOP));
+                        validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.KNIGHT));
+                        validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.QUEEN));
+                        validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.ROOK));
+                    } else {
+                        validMoves.add(new ChessMove(myPosition, captureLeft, null));
+                    }
+                }
+            }
+
+            // Capture diagonally right
+            int captureRightRow = myPosition.getRow() + direction;
+            int captureRightColumn = myPosition.getColumn() + 1;
+            if (board.isOnBoard(captureRightRow, captureRightColumn)) {
+                ChessPosition captureRight = new ChessPosition(captureRightRow, captureRightColumn);
+                if (isValidCapture(board, captureRight)) {
+                    // Check if the pawn reaches the back row of the opposing team
+                    int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
+                    if (captureRightRow == backRow) {
+                        // Add the move four times for promotion (BISHOP, KNIGHT, QUEEN, ROOK)
+                        validMoves.add(new ChessMove(myPosition, captureRight, PieceType.BISHOP));
+                        validMoves.add(new ChessMove(myPosition, captureRight, PieceType.KNIGHT));
+                        validMoves.add(new ChessMove(myPosition, captureRight, PieceType.QUEEN));
+                        validMoves.add(new ChessMove(myPosition, captureRight, PieceType.ROOK));
+                    } else {
+                        validMoves.add(new ChessMove(myPosition, captureRight, null));
                     }
                 }
             }
