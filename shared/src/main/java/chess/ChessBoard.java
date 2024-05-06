@@ -10,10 +10,7 @@ import java.util.Objects;
  * signature of the existing methods.
  */
 public class ChessBoard {
-    private ChessPiece[][] board = new ChessPiece[8][8];
-    // Constants for the number of rows and columns on the chessboard
-    private static final int NUM_ROWS = 8;
-    private static final int NUM_COLUMNS = 8;
+    private ChessPiece[][] board;
 
     public ChessBoard() {
         this.board = new ChessPiece[8][8];
@@ -30,8 +27,8 @@ public class ChessBoard {
         int row = position.getRow(); // Use 1-based indexing
         int col = position.getColumn(); // Use 1-based indexing
 
-        // Print a message to track the addition of a piece
-        // System.out.println("Adding " + piece.getPieceType() + " to position " + position);
+         //Print a message to track the addition of a piece
+//         System.out.println("Adding " + piece.getPieceType() + " to position " + position);
 
         this.board[row - 1][col - 1] = piece; // Add the piece to the board
     }
@@ -82,7 +79,59 @@ public class ChessBoard {
      */
     public void resetBoard() {
         this.board = new ChessPiece[8][8];
-        //initializeDefaultBoard();
+        initializeDefaultBoard();
+    }
+
+    private void initializeDefaultBoard() {
+        // Pawns
+        for (int col = 1; col <= 8; col++) { // Use 1-based indexing for columns
+            addPiece(new ChessPosition(2, col), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN));
+            addPiece(new ChessPosition(7, col), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN));
+        }
+
+        // Rooks
+        addPiece(new ChessPosition(1, 1), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK)); //whiteQueenSideRook);
+        addPiece(new ChessPosition(1, 8), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK)); //whiteKingSideRook);
+        addPiece(new ChessPosition(8, 1), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK)); //blackQueenSideRook);
+        addPiece(new ChessPosition(8, 8), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK)); //blackKingSideRook);
+
+        // Knights
+        addPiece(new ChessPosition(1, 2), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(1, 7), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(8, 2), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(8, 7), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KNIGHT));
+
+        // Bishops
+        addPiece(new ChessPosition(1, 3), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(1, 6), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(8, 3), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(8, 6), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.BISHOP));
+
+        // Queens
+        addPiece(new ChessPosition(1, 4), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.QUEEN));
+        addPiece(new ChessPosition(8, 4), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.QUEEN));
+
+        // Kings
+        addPiece(new ChessPosition(1, 5), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING));
+        addPiece(new ChessPosition(8, 5), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING));
+
+//        System.out.println("Board state after initialization:");
+//        printBoardState();
+    }
+
+    /**
+     * Debug to verify board and piece initialization
+     * (Layout of default chess board)
+     */
+    private void printBoardState() {
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                ChessPiece piece = this.board[row][col];
+                if (piece != null) {
+                    System.out.println("Row " + (row + 1) + ", Col " + (col + 1) + ": " + piece.getTeamColor() + " " + piece.getPieceType());
+                }
+            }
+        }
     }
 
     @Override
@@ -105,38 +154,23 @@ public class ChessBoard {
                 '}';
     }
 
-//    private void initializeDefaultBoard() {
-//        // Pawns
-//        for (int col = 1; col <= 8; col++) {
-//            addPiece(new Position(2, col), new Pawn(ChessGame.TeamColor.WHITE));
-//            addPiece(new Position(7, col), new Pawn(ChessGame.TeamColor.BLACK));
+
+//    @Override
+//    public String toString() {
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("ChessBoard{\n");
+//        for (ChessPiece[] row : board) {
+//            sb.append("  ");
+//            for (ChessPiece piece : row) {
+//                if (piece != null) {
+//                    sb.append(piece.getPieceType()).append(piece.getTeamColor() == ChessGame.TeamColor.WHITE ? "W" : "B").append(" ");
+//                } else {
+//                    sb.append("| ");
+//                }
+//            }
+//            sb.append("\n");
 //        }
-//
-//        // Rooks
-//        addPiece(new Position(1, 'a' - 'a' + 1), whiteQueenSideRook);
-//        addPiece(new Position(1, 'h' - 'a' + 1), whiteKingSideRook);
-//        addPiece(new Position(8, 'a' - 'a' + 1), blackQueenSideRook);
-//        addPiece(new Position(8, 'h' - 'a' + 1), blackKingSideRook);
-//
-//        // Knights
-//        addPiece(new Position(1, 'b' - 'a' + 1), new Knight(ChessGame.TeamColor.WHITE));
-//        addPiece(new Position(1, 'g' - 'a' + 1), new Knight(ChessGame.TeamColor.WHITE));
-//        addPiece(new Position(8, 'b' - 'a' + 1), new Knight(ChessGame.TeamColor.BLACK));
-//        addPiece(new Position(8, 'g' - 'a' + 1), new Knight(ChessGame.TeamColor.BLACK));
-//
-//        // Bishops
-//        addPiece(new Position(1, 'c' - 'a' + 1), new Bishop(ChessGame.TeamColor.WHITE));
-//        addPiece(new Position(1, 'f' - 'a' + 1), new Bishop(ChessGame.TeamColor.WHITE));
-//        addPiece(new Position(8, 'c' - 'a' + 1), new Bishop(ChessGame.TeamColor.BLACK));
-//        addPiece(new Position(8, 'f' - 'a' + 1), new Bishop(ChessGame.TeamColor.BLACK));
-//
-//        // Queens
-//        addPiece(new Position(1, 'd' - 'a' + 1), new Queen(ChessGame.TeamColor.WHITE));
-//        addPiece(new Position(8, 'd' - 'a' + 1), new Queen(ChessGame.TeamColor.BLACK));
-//
-//        // Kings
-//        addPiece(new Position(1, 'e' - 'a' + 1), new King(ChessGame.TeamColor.WHITE));
-//        addPiece(new Position(8, 'e' - 'a' + 1), new King(ChessGame.TeamColor.BLACK));
-//
+//        sb.append("}");
+//        return sb.toString();
 //    }
 }
