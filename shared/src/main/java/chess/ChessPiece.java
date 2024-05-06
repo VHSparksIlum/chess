@@ -95,6 +95,30 @@ public class ChessPiece {
     }
 
     /**
+     * @return whether the move is within board boundaries AND the target square is empty
+     * for rooks
+     */
+    private boolean isValidRookCapture(ChessBoard board, ChessPosition position) {
+        ChessPiece targetPiece = board.getPiece(position);
+        return board.isOnBoard(position.getRow(), position.getColumn()) &&
+                targetPiece != null &&
+                targetPiece.getTeamColor() != teamColor;
+    }
+
+    /**
+     * @return whether capture is within board boundaries AND the target square contains an opponent piece
+     * for rooks
+     */
+    private boolean isValidRookMove(ChessBoard board, ChessPosition position) {
+        if (!board.isOnBoard(position.getRow(), position.getColumn())) {
+            return false;
+        }
+
+        ChessPiece targetPiece = board.getPiece(position);
+        return targetPiece == null || targetPiece.getTeamColor() != teamColor;
+    }
+
+    /**
      * Calculates all the positions a chess piece can move to
      * Does not take into account moves that are illegal due to leaving the king in
      * danger
@@ -288,6 +312,31 @@ public class ChessPiece {
 
                     // Check if the move captures an opponent's piece
                     if (isValidQueenCapture(board, newPosition)) {
+                        //validMoves.add(new Move(myPosition, newPosition, board.getPiece(newPosition).getPieceType()));
+                        break; // Stop if a capture occurs
+                    }
+                }
+            }
+        }
+        else if(getPieceType() == PieceType.ROOK) {
+            // Up, down, left, right
+            int[][] directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+            for (int[] direction : directions) {
+                int rowDelta = direction[0];
+                int colDelta = direction[1];
+
+                for (int i = 1; i <= 7; i++) { // Check up to 7 squares in each direction
+                    ChessPosition newPosition = new ChessPosition(myPosition.getRow() + i * rowDelta, myPosition.getColumn() + i * colDelta);
+
+                    if (!isValidRookMove(board, newPosition)) {
+                        break;
+                    }
+
+                    validMoves.add(new ChessMove(myPosition, newPosition, null));
+
+                    // Check if the move captures an opponent's piece
+                    if (isValidRookCapture(board, newPosition)) {
                         //validMoves.add(new Move(myPosition, newPosition, board.getPiece(newPosition).getPieceType()));
                         break; // Stop if a capture occurs
                     }
