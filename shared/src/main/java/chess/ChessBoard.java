@@ -22,6 +22,7 @@ public class ChessBoard {
      * @param position where to add the piece to
      * @param piece    the piece to add
      */
+    //SIMPLIFY
     public void addPiece(ChessPosition position, ChessPiece piece) {
         //board[position.getRow()][position.getColumn()] = piece;
         int row = position.getRow(); // Use 1-based indexing
@@ -33,6 +34,7 @@ public class ChessBoard {
         this.board[row - 1][col - 1] = piece; // Add the piece to the board
     }
 
+    //SIMPLIFY
     public void removePiece(ChessPosition position) {
         int row = position.getRow(); // Use 1-based indexing
         int col = position.getColumn(); // Use 1-based indexing
@@ -49,6 +51,7 @@ public class ChessBoard {
      * @return Either the piece at the position, or null if no piece is at that
      * position
      */
+    //SIMPLIFY
     public ChessPiece getPiece(ChessPosition position) {
         //return board[position.getRow()][position.getColumn()];
         int row = position.getRow(); // Use 1-based indexing

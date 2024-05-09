@@ -16,7 +16,7 @@ public class ChessMove {
     private boolean isEnPassant;
 
     /**
-     * Constructor for regular moves (without promotion))
+     * Constructor for regular moves (without promotion)
      */
     public ChessMove(ChessPosition startPosition, ChessPosition endPosition) {
         this.startPosition = startPosition;

@@ -132,6 +132,28 @@ public class ChessPiece {
         return targetPiece == null || targetPiece.getTeamColor() != teamColor;
     }
 
+    private boolean isValidMove(ChessBoard board, ChessPosition position) {
+        if (getPieceType() == ChessPiece.PieceType.PAWN) {
+            return board.isOnBoard(position.getRow(), position.getColumn()) && board.getPiece(position) == null;
+        }
+        else if (getPieceType() == ChessPiece.PieceType.QUEEN || getPieceType() == ChessPiece.PieceType.ROOK) {
+
+
+            if(!board.isOnBoard(position.getRow(), position.getColumn())) {
+                return false;
+            }
+            ChessPiece checkPiece = board.getPiece(position);
+
+            return checkPiece == null || checkPiece.getTeamColor() != teamColor;
+        }
+        return true;
+    }
+
+    private boolean isValidCapture(ChessBoard board, ChessPosition position) {
+        ChessPiece checkPiece = board.getPiece(position);
+        return board.isOnBoard(position.getRow(), position.getColumn()) && checkPiece != null && checkPiece.getTeamColor() != teamColor;
+    }
+
     /**
      * Calculates all the positions a chess piece can move to
      * Does not take into account moves that are illegal due to leaving the king in
@@ -141,7 +163,6 @@ public class ChessPiece {
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         List<ChessMove> validMoves = new ArrayList<>();
-
         int myRow = myPosition.getRow();
         int myCol = myPosition.getColumn();
 
@@ -151,7 +172,7 @@ public class ChessPiece {
             int[] colDirections = { -1, 1, -1, 1 };
 
             for (int i = 0; i < 4; i++) {
-                for (int distance = 1; distance <= 7; distance++) {
+                for (int distance = 1; distance < 8; distance++) {
                     int newRow = myRow + distance * rowDirections[i];
                     int newCol = myCol + distance * colDirections[i];
                     ChessPosition newPosition = new ChessPosition(newRow, newCol);
@@ -264,16 +285,25 @@ public class ChessPiece {
                 }
             }
 
+//            boolean notBlocked = true;
+//            for (int i = myPosition.getRow() + direction; i != checkRow2; i+= direction) {
+//                if (board.getPiece(new ChessPosition(i, checkCol2)) != null) {
+//                    notBlocked = false;
+//                    break;
+//                }
+//            }
+//            if (isValidMove(board, checkPosition2) && notBlocked) {
+//                validMoves.add(new ChessMove(myPosition, checkPosition2, null));
+//            }
+
             // Capture diagonally left
-            int captureLeftRow = myPosition.getRow() + direction;
-            int captureLeftColumn = myPosition.getColumn() - 1;
-            if (board.isOnBoard(captureLeftRow, captureLeftColumn)) {
-                ChessPosition captureLeft = new ChessPosition(captureLeftRow, captureLeftColumn);
-                if (isValidPawnCapture(board, captureLeft)) {
-                    // Check if the pawn reaches the back row of the opposing team
-                    int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
-                    if (captureLeftRow == backRow) {
-                        // Add the move four times for promotion (BISHOP, KNIGHT, QUEEN, ROOK)
+            int captureRow = myPosition.getRow() + direction;
+            int captureLeftCol = myPosition.getColumn() - 1;
+            int captureRightCol = myPosition.getColumn() + 1;
+            if (board.isOnBoard(captureRow, captureLeftCol)) {
+                ChessPosition captureLeft = new ChessPosition(captureRow, captureLeftCol);
+                if (isValidCapture(board, captureLeft)) {
+                    if (captureRow == backRow) {
                         validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.BISHOP));
                         validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.KNIGHT));
                         validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.QUEEN));
@@ -283,17 +313,11 @@ public class ChessPiece {
                     }
                 }
             }
-
             // Capture diagonally right
-            int captureRightRow = myPosition.getRow() + direction;
-            int captureRightColumn = myPosition.getColumn() + 1;
-            if (board.isOnBoard(captureRightRow, captureRightColumn)) {
-                ChessPosition captureRight = new ChessPosition(captureRightRow, captureRightColumn);
-                if (isValidPawnCapture(board, captureRight)) {
-                    // Check if the pawn reaches the back row of the opposing team
-                    int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
-                    if (captureRightRow == backRow) {
-                        // Add the move four times for promotion (BISHOP, KNIGHT, QUEEN, ROOK)
+            if (board.isOnBoard(captureRow, captureRightCol)) {
+                ChessPosition captureRight = new ChessPosition(captureRow, captureRightCol);
+                if (isValidCapture(board, captureRight)) {
+                    if (captureRow == backRow) {
                         validMoves.add(new ChessMove(myPosition, captureRight, PieceType.BISHOP));
                         validMoves.add(new ChessMove(myPosition, captureRight, PieceType.KNIGHT));
                         validMoves.add(new ChessMove(myPosition, captureRight, PieceType.QUEEN));
@@ -315,7 +339,7 @@ public class ChessPiece {
                 int rowDelta = direction[0];
                 int colDelta = direction[1];
 
-                for (int i = 1; i <= 7; i++) { // Check up to 7 squares in each direction
+                for (int i = 1; i < 8; i++) { // Check up to 7 squares in each direction
                     ChessPosition newPosition = new ChessPosition(myPosition.getRow() + i * rowDelta, myPosition.getColumn() + i * colDelta);
 
                     if (!isValidQueenMove(board, newPosition)) {
@@ -340,7 +364,7 @@ public class ChessPiece {
                 int rowDelta = direction[0];
                 int colDelta = direction[1];
 
-                for (int i = 1; i <= 7; i++) { // Check up to 7 squares in each direction
+                for (int i = 1; i < 8; i++) { // Check up to 7 squares in each direction
                     ChessPosition newPosition = new ChessPosition(myPosition.getRow() + i * rowDelta, myPosition.getColumn() + i * colDelta);
 
                     if (!isValidRookMove(board, newPosition)) {
