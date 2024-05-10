@@ -10,10 +10,9 @@ import java.util.Objects;
  */
 public class ChessMove {
 
-    private ChessPosition startPosition;
-    private ChessPosition endPosition;
-    private ChessPiece.PieceType promotionPiece;
-    private boolean isEnPassant;
+    private final ChessPosition startPosition;
+    private final ChessPosition endPosition;
+    private final ChessPiece.PieceType promotionPiece;
 
     /**
      * Constructor for regular moves (without promotion)
@@ -33,15 +32,6 @@ public class ChessMove {
         this.promotionPiece = promotionPiece;
     }
 
-    /**
-     * Constructor for moves with En Passant
-     */
-//    public ChessMove(ChessPosition start, ChessPosition end, ChessPiece.PieceType promotionPiece, boolean isEnPassant) {
-//        this.startPosition = start;
-//        this.endPosition = end;
-//        this.promotionPiece = promotionPiece;
-//        this.isEnPassant = isEnPassant;
-//    }
     /**
      * @return ChessPosition of starting location
      */
@@ -66,42 +56,6 @@ public class ChessMove {
         return this.promotionPiece;
     }
 
-//    /**
-//     * Set the starting position of this chess move
-//     *
-//     * @param startPosition the ChessPosition to set as the starting position
-//     */
-//    public void setStartPosition(ChessPosition startPosition) {
-//        this.startPosition = startPosition;
-//    }
-//
-//    /**
-//     * Set the ending position of this chess move
-//     *
-//     * @param endPosition the ChessPosition to set as the ending position
-//     */
-//    public void setEndPosition(ChessPosition endPosition) {
-//        this.endPosition = endPosition;
-//    }
-//
-//    /**
-//     * Set the promotion piece for this chess move
-//     *
-//     * @param promotionPiece the ChessPiece.PieceType to set as the promotion piece
-//     */
-//    public void setPromotionPiece(ChessPiece.PieceType promotionPiece) {
-//        this.promotionPiece = promotionPiece;
-//    }
-//
-//    /**
-//     * Apply pawn promotion by setting the promotion piece
-//     *
-//     * @param promotionPiece the ChessPiece.PieceType to set as the promotion piece
-//     */
-//    public void applyPromotion(ChessPiece.PieceType promotionPiece) {
-//        this.promotionPiece = promotionPiece;
-//    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -111,10 +65,10 @@ public class ChessMove {
         sb.append(" to ");
         sb.append(endPosition.toString()); // Use the custom toString for Position
 
-//        if (promotionPiece != null) {
-//            sb.append(" promoting to ");
-//            sb.append(promotionPiece.toString()); // Use the custom toString for PieceType
-//        }
+        if (promotionPiece != null) {
+            sb.append(" promoting to ");
+            sb.append(promotionPiece); // Use the custom toString for PieceType
+        }
 
         return sb.toString();
     }

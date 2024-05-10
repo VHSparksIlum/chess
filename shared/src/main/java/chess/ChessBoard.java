@@ -22,26 +22,21 @@ public class ChessBoard {
      * @param position where to add the piece to
      * @param piece    the piece to add
      */
-    //SIMPLIFY
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        //board[position.getRow()][position.getColumn()] = piece;
-        int row = position.getRow(); // Use 1-based indexing
-        int col = position.getColumn(); // Use 1-based indexing
-
-         //Print a message to track the addition of a piece
 //         System.out.println("Adding " + piece.getPieceType() + " to position " + position);
 
-        this.board[row - 1][col - 1] = piece; // Add the piece to the board
+        this.board[position.getRow() - 1][position.getColumn() - 1] = piece;
     }
 
-    //SIMPLIFY
+    /**
+     * Removes a chess piece from the chessboard
+     *
+     * @param position where to add the piece to
+     */
     public void removePiece(ChessPosition position) {
-        int row = position.getRow(); // Use 1-based indexing
-        int col = position.getColumn(); // Use 1-based indexing
-        this.board[row - 1][col - 1] = null; // Clear the position on the board
-
         //System.out.println("Removing piece at position " + position);
 
+        this.board[position.getRow() - 1][position.getColumn() - 1] = null;
     }
 
     /**
@@ -51,13 +46,7 @@ public class ChessBoard {
      * @return Either the piece at the position, or null if no piece is at that
      * position
      */
-    //SIMPLIFY
     public ChessPiece getPiece(ChessPosition position) {
-        //return board[position.getRow()][position.getColumn()];
-        int row = position.getRow(); // Use 1-based indexing
-        int col = position.getColumn(); // Use 1-based indexing
-//        ChessPiece piece = this.board[row - 1][col - 1];
-
         // Debug statement to log information about the piece
 //        if (piece != null) {
 //            System.out.println("Getting piece at position " + position + ": " + piece.getTeamColor() + " " + piece.getPieceType());
@@ -65,7 +54,7 @@ public class ChessBoard {
 //            System.out.println("Getting piece at position " + position + ": null");
 //        }
 
-        return this.board[row - 1][col - 1]; // Retrieve the piece from the board
+        return this.board[position.getRow() - 1][position.getColumn() - 1];
     }
 
     /**
@@ -118,23 +107,7 @@ public class ChessBoard {
         addPiece(new ChessPosition(1, 5), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING));
         addPiece(new ChessPosition(8, 5), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING));
 
-//        System.out.println("Board state after initialization:");
-//        printBoardState();
-    }
 
-    /**
-     * Debug to verify board and piece initialization
-     * (Layout of default chess board)
-     */
-    private void printBoardState() {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                ChessPiece piece = this.board[row][col];
-                if (piece != null) {
-                    System.out.println("Row " + (row + 1) + ", Col " + (col + 1) + ": " + piece.getTeamColor() + " " + piece.getPieceType());
-                }
-            }
-        }
     }
 
     @Override
@@ -156,24 +129,4 @@ public class ChessBoard {
                 "board=" + Arrays.toString(board) +
                 '}';
     }
-
-
-//    @Override
-//    public String toString() {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("ChessBoard{\n");
-//        for (ChessPiece[] row : board) {
-//            sb.append("  ");
-//            for (ChessPiece piece : row) {
-//                if (piece != null) {
-//                    sb.append(piece.getPieceType()).append(piece.getTeamColor() == ChessGame.TeamColor.WHITE ? "W" : "B").append(" ");
-//                } else {
-//                    sb.append("| ");
-//                }
-//            }
-//            sb.append("\n");
-//        }
-//        sb.append("}");
-//        return sb.toString();
-//    }
 }

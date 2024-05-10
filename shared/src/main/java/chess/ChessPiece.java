@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -14,10 +15,8 @@ import java.util.Objects;
 public class ChessPiece {
     private final ChessGame.TeamColor teamColor;
     private final PieceType type;
-//    private final ChessGame.TeamColor oppositeTeamColor; //possible code for extra credit moves
-//    private boolean hasMoved;
 
-    public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+    public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type) {
         this.teamColor = pieceColor;
         this.type = type;
     }
@@ -34,9 +33,6 @@ public class ChessPiece {
     public int hashCode() {
         return Objects.hash(teamColor, type);
     }
-
-//    public ChessPiece() {
-//    }
 
     /**
      * The various different chess piece options
@@ -66,78 +62,10 @@ public class ChessPiece {
 
     /**
      * @return whether capture is within board boundaries AND the target square contains an opponent piece
-     * for pawns
      */
-    private boolean isValidPawnCapture(ChessBoard board, ChessPosition position) {
-        ChessPiece targetPiece = board.getPiece(position);
-        return board.isOnBoard(position.getRow(), position.getColumn()) &&
-                targetPiece != null &&
-                targetPiece.getTeamColor() != teamColor;
-    }
-
-    /**
-     * @return whether the move is within board boundaries AND the target square is empty
-     * for pawns
-     */
-    private boolean isValidPawnMove(ChessBoard board, ChessPosition position) {
-        return board.isOnBoard(position.getRow(), position.getColumn()) && board.getPiece(position) == null;
-    }
-
-    /**
-     * @return whether capture is within board boundaries AND the target square contains an opponent piece
-     * for queen
-     */
-    private boolean isValidQueenCapture(ChessBoard board, ChessPosition position) {
-        ChessPiece targetPiece = board.getPiece(position);
-        return board.isOnBoard(position.getRow(), position.getColumn()) &&
-                targetPiece != null &&
-                targetPiece.getTeamColor() != teamColor;
-    }
-
-    /**
-     * @return whether the move is within board boundaries AND the target square is empty
-     * for queen
-     */
-    private boolean isValidQueenMove(ChessBoard board, ChessPosition position) {
-        if (!board.isOnBoard(position.getRow(), position.getColumn())) {
-            return false;
-        }
-
-        // Check if the target square is empty or contains an opponent's piece
-        ChessPiece targetPiece = board.getPiece(position);
-        return targetPiece == null || targetPiece.getTeamColor() != teamColor;
-    }
-
-    /**
-     * @return whether the move is within board boundaries AND the target square is empty
-     * for rooks
-     */
-    private boolean isValidRookCapture(ChessBoard board, ChessPosition position) {
-        ChessPiece targetPiece = board.getPiece(position);
-        return board.isOnBoard(position.getRow(), position.getColumn()) &&
-                targetPiece != null &&
-                targetPiece.getTeamColor() != teamColor;
-    }
-
-    /**
-     * @return whether capture is within board boundaries AND the target square contains an opponent piece
-     * for rooks
-     */
-    private boolean isValidRookMove(ChessBoard board, ChessPosition position) {
-        if (!board.isOnBoard(position.getRow(), position.getColumn())) {
-            return false;
-        }
-
-        ChessPiece targetPiece = board.getPiece(position);
-        return targetPiece == null || targetPiece.getTeamColor() != teamColor;
-    }
 
     private boolean isValidMove(ChessBoard board, ChessPosition position) {
-        if (getPieceType() == ChessPiece.PieceType.PAWN) {
-            return board.isOnBoard(position.getRow(), position.getColumn()) && board.getPiece(position) == null;
-        }
-        else if (getPieceType() == ChessPiece.PieceType.QUEEN || getPieceType() == ChessPiece.PieceType.ROOK) {
-
+        if (getPieceType() != PieceType.PAWN) {
 
             if(!board.isOnBoard(position.getRow(), position.getColumn())) {
                 return false;
@@ -146,12 +74,65 @@ public class ChessPiece {
 
             return checkPiece == null || checkPiece.getTeamColor() != teamColor;
         }
-        return true;
+        else {
+            return board.isOnBoard(position.getRow(), position.getColumn()) && board.getPiece(position) == null;
+        }
     }
 
+    /**
+     * @return whether the move is within board boundaries AND the target square is empty
+     */
     private boolean isValidCapture(ChessBoard board, ChessPosition position) {
         ChessPiece checkPiece = board.getPiece(position);
         return board.isOnBoard(position.getRow(), position.getColumn()) && checkPiece != null && checkPiece.getTeamColor() != teamColor;
+    }
+
+    /**
+     * adds promotion moves condensed
+     */
+    private void addPromotionMoves (List<ChessMove> validMoves, ChessPosition position, ChessPosition newPosition) {
+        validMoves.add(new ChessMove(position, newPosition, PieceType.BISHOP));
+        validMoves.add(new ChessMove(position, newPosition, PieceType.KNIGHT));
+        validMoves.add(new ChessMove(position, newPosition, PieceType.QUEEN));
+        validMoves.add(new ChessMove(position, newPosition, PieceType.ROOK));
+    }
+
+    /**
+     * @return valid moves for sliding pieces
+     */
+    private int[][] getMoves() {
+        int[][] queenMoves = {
+                {0, 1}, {0, -1}, {1, 0}, {-1, 0}, // Rook-like movements
+                {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // Bishop-like movements
+        };
+        int[][] rookMoves = Arrays.copyOfRange(queenMoves, 0, 4);
+        int[][] bishopMoves = Arrays.copyOfRange(queenMoves, 4, 8);
+        int[][] kingMoves = {
+                {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}
+        };
+        int[][] knightMoves = {
+                {-2, -1}, {-2, 1},
+                {-1, -2}, {-1, 2},
+                {1, -2}, {1, 2},
+                {2, -1}, {2, 1}
+        };
+
+        int[][] moves;
+        PieceType pieceType = getPieceType();
+        if (pieceType == PieceType.BISHOP) {
+            moves = bishopMoves;
+        } else if (pieceType == PieceType.KING) {
+            moves = kingMoves;
+        } else if (pieceType == PieceType.KNIGHT) {
+            moves = knightMoves;
+        } else if (pieceType == PieceType.QUEEN) {
+            moves = queenMoves;
+        } else if (pieceType == PieceType.ROOK) {
+            moves = rookMoves;
+        } else {
+            throw new RuntimeException("Unknown PieceType: " + pieceType);
+        }
+        return moves;
     }
 
     /**
@@ -163,227 +144,92 @@ public class ChessPiece {
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         List<ChessMove> validMoves = new ArrayList<>();
-        int myRow = myPosition.getRow();
-        int myCol = myPosition.getColumn();
 
-        if(getPieceType() == PieceType.BISHOP) {
-            // Define the four possible diagonal directions a bishop can move
-            int[] rowDirections = { -1, -1, 1, 1 };
-            int[] colDirections = { -1, 1, -1, 1 };
-
-            for (int i = 0; i < 4; i++) {
-                for (int distance = 1; distance < 8; distance++) {
-                    int newRow = myRow + distance * rowDirections[i];
-                    int newCol = myCol + distance * colDirections[i];
-                    ChessPosition newPosition = new ChessPosition(newRow, newCol);
-
-                    // Check if the new position is on the chessboard using isOnBoard
-                    if (board.isOnBoard(newRow, newCol)) {
-                        ChessPiece targetPiece = board.getPiece(newPosition);
-
-                        // If the target square is empty, it's a valid move
-                        if (targetPiece == null) {
-                            validMoves.add(new ChessMove(myPosition, newPosition));
-                        } else {
-                            // If the target square has an opponent's piece, it's a valid capture
-                            if (targetPiece.getTeamColor() != teamColor) {
-                                validMoves.add(new ChessMove(myPosition, newPosition));
-                            }
-                            break; // Stop searching in this direction if a piece is encountered
-                        }
-                    } else {
-                        break; // Stop searching in this direction if the position is off the board
-                    }
-                }
-            }
-        }
-        else if(getPieceType() == PieceType.KING) {
-            // Define the eight possible directions a king can move
-            int[] rowDirections = { -1, -1, -1, 0, 0, 1, 1, 1 };
-            int[] colDirections = { -1, 0, 1, -1, 1, -1, 0, 1 };
-
-            for (int i = 0; i < 8; i++) {
-                int newRow = myRow + rowDirections[i];
-                int newCol = myCol + colDirections[i];
-                ChessPosition newPosition = new ChessPosition(newRow, newCol);
-
-                // Check if the new position is on the chessboard
-                if (board.isOnBoard(newRow, newCol)) {
-                    ChessPiece targetPiece = board.getPiece(newPosition);
-
-                    // If the target square is empty or contains an opponent's piece, it's a valid move
-                    if (targetPiece == null || targetPiece.getTeamColor() != teamColor) {
-                        validMoves.add(new ChessMove(myPosition, newPosition));
-                    }
-                }
-            }
-        }
-        else if(getPieceType() == PieceType.KNIGHT) {
-            // Define the valid "L" shape moves from the Knight's position
-            int[][] knightMoves = {
-                    {-2, -1}, {-2, 1},
-                    {-1, -2}, {-1, 2},
-                    {1, -2}, {1, 2},
-                    {2, -1}, {2, 1}
-            };
-
-            for (int[] move : knightMoves) {
-                int newRow = myRow + move[0];
-                int newCol = myCol + move[1];
-
-                // Check if the new position is within the board bounds using isOnBoard
-                if (board.isOnBoard(newRow, newCol)) {
-                    ChessPosition newPosition = new ChessPosition(newRow, newCol);
-                    ChessPiece targetPiece = board.getPiece(newPosition);
-
-                    // Knights can jump over other pieces, so no need to check for obstructions
-                    if (targetPiece == null || targetPiece.getTeamColor() != teamColor) {
-                        validMoves.add(new ChessMove(myPosition, newPosition));
-                    }
-                }
-            }
-        }
-        else if(getPieceType() == PieceType.PAWN) {
+        if (getPieceType() == PieceType.PAWN) {
             // Determine the direction of pawn movement based on its team color
             int direction = (teamColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
+            int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
+            boolean initialMove = (teamColor == ChessGame.TeamColor.WHITE && myPosition.getRow() == 2) || (teamColor == ChessGame.TeamColor.BLACK && myPosition.getRow() == 7);
 
             // Move one square forward
             int newRow = myPosition.getRow() + direction;
             int newColumn = myPosition.getColumn();
             if (board.isOnBoard(newRow, newColumn) && board.getPiece(new ChessPosition(newRow, newColumn)) == null) {
                 // Check if the pawn reaches the back row of the opposing team
-                int backRow = (teamColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
                 if (newRow == backRow) {
                     // Add the move four times for promotion (BISHOP, KNIGHT, QUEEN, ROOK)
-                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), PieceType.BISHOP));
-                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), PieceType.KNIGHT));
-                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), PieceType.QUEEN));
-                    validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), PieceType.ROOK));
+                    addPromotionMoves(validMoves, myPosition, new ChessPosition(newRow, newColumn));
                 } else {
                     validMoves.add(new ChessMove(myPosition, new ChessPosition(newRow, newColumn), null));
                 }
             }
 
             // Initial two-square move (only allowed from starting position and not blocked)
-            if (((teamColor == ChessGame.TeamColor.WHITE && myPosition.getRow() == 2) ||
-                    (teamColor == ChessGame.TeamColor.BLACK && myPosition.getRow() == 7))) {
+            if (initialMove) {
                 int newRow2 = myPosition.getRow() + 2 * direction;
-                int newColumn2 = myPosition.getColumn(); // Updated this line
+                int newColumn2 = myPosition.getColumn();
                 ChessPosition twoSquaresForward = new ChessPosition(newRow2, newColumn2);
 
                 // Check if squares in between are empty
-                boolean squaresBetweenEmpty = true;
+                boolean notBlocked = true;
                 for (int i = myPosition.getRow() + direction; i != newRow2; i += direction) {
-                    ChessPosition positionBetween = new ChessPosition(i, newColumn2);
-                    if (board.getPiece(positionBetween) != null) {
-                        squaresBetweenEmpty = false;
+                    if (board.getPiece(new ChessPosition(i, newColumn2)) != null) {
+                        notBlocked = false;
                         break;
                     }
                 }
-                if (isValidPawnMove(board, twoSquaresForward) && squaresBetweenEmpty) {
+                if (isValidMove(board, twoSquaresForward) && notBlocked) {
                     validMoves.add(new ChessMove(myPosition, twoSquaresForward, null));
                 }
             }
 
-//            boolean notBlocked = true;
-//            for (int i = myPosition.getRow() + direction; i != checkRow2; i+= direction) {
-//                if (board.getPiece(new ChessPosition(i, checkCol2)) != null) {
-//                    notBlocked = false;
-//                    break;
-//                }
-//            }
-//            if (isValidMove(board, checkPosition2) && notBlocked) {
-//                validMoves.add(new ChessMove(myPosition, checkPosition2, null));
-//            }
-
-            // Capture diagonally left
+            // Capture diagonally
             int captureRow = myPosition.getRow() + direction;
             int captureLeftCol = myPosition.getColumn() - 1;
             int captureRightCol = myPosition.getColumn() + 1;
-            if (board.isOnBoard(captureRow, captureLeftCol)) {
-                ChessPosition captureLeft = new ChessPosition(captureRow, captureLeftCol);
-                if (isValidCapture(board, captureLeft)) {
-                    if (captureRow == backRow) {
-                        validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.BISHOP));
-                        validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.KNIGHT));
-                        validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.QUEEN));
-                        validMoves.add(new ChessMove(myPosition, captureLeft, PieceType.ROOK));
-                    } else {
-                        validMoves.add(new ChessMove(myPosition, captureLeft, null));
-                    }
+            ChessPosition captureLeft = new ChessPosition(captureRow, captureLeftCol);
+            ChessPosition captureRight = new ChessPosition(captureRow, captureRightCol);
+            if ((board.isOnBoard(captureRow, captureLeftCol) && isValidCapture(board, captureLeft))) {
+                if (captureRow == backRow) {
+                    addPromotionMoves(validMoves, myPosition, captureLeft);
+                } else {
+                    validMoves.add(new ChessMove(myPosition, captureLeft, null));
                 }
             }
-            // Capture diagonally right
-            if (board.isOnBoard(captureRow, captureRightCol)) {
-                ChessPosition captureRight = new ChessPosition(captureRow, captureRightCol);
-                if (isValidCapture(board, captureRight)) {
-                    if (captureRow == backRow) {
-                        validMoves.add(new ChessMove(myPosition, captureRight, PieceType.BISHOP));
-                        validMoves.add(new ChessMove(myPosition, captureRight, PieceType.KNIGHT));
-                        validMoves.add(new ChessMove(myPosition, captureRight, PieceType.QUEEN));
-                        validMoves.add(new ChessMove(myPosition, captureRight, PieceType.ROOK));
-                    } else {
-                        validMoves.add(new ChessMove(myPosition, captureRight, null));
-                    }
+            if ((board.isOnBoard(captureRow, captureRightCol) && isValidCapture(board, captureRight))) {
+                if (captureRow == backRow) {
+                    addPromotionMoves(validMoves, myPosition, captureRight);
+                } else {
+                    validMoves.add(new ChessMove(myPosition, captureRight, null));
                 }
             }
-        }
-        else if(getPieceType() == PieceType.QUEEN) {
-            // The Queen can move in eight directions: up, down, left, right, and the four diagonals.
-            int[][] directions = {
-                    { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, // Rook-like movements
-                    { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } // Bishop-like movements
-            };
-
-            for (int[] direction : directions) {
+        } else if (getPieceType() != null) {
+            int[][] moves = getMoves();
+            for (int[] direction : moves) {
                 int rowDelta = direction[0];
                 int colDelta = direction[1];
 
-                for (int i = 1; i < 8; i++) { // Check up to 7 squares in each direction
+                int maxIterations = (getPieceType() == PieceType.KING || getPieceType() == PieceType.KNIGHT) ? 1 : 7;
+
+                //Check up to 7 squares in the given direction, according to piece type
+                for (int i = 1; i <= maxIterations; i++) {
                     ChessPosition newPosition = new ChessPosition(myPosition.getRow() + i * rowDelta, myPosition.getColumn() + i * colDelta);
 
-                    if (!isValidQueenMove(board, newPosition)) {
+                    if (!isValidMove(board, newPosition)) {
                         break;
                     }
 
                     validMoves.add(new ChessMove(myPosition, newPosition, null));
 
                     // Check if the move captures an opponent's piece
-                    if (isValidQueenCapture(board, newPosition)) {
+                    if (isValidCapture(board, newPosition)) {
                         //validMoves.add(new Move(myPosition, newPosition, board.getPiece(newPosition).getPieceType()));
                         break; // Stop if a capture occurs
                     }
                 }
             }
         }
-        else if(getPieceType() == PieceType.ROOK) {
-            // Up, down, left, right
-            int[][] directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
-            for (int[] direction : directions) {
-                int rowDelta = direction[0];
-                int colDelta = direction[1];
-
-                for (int i = 1; i < 8; i++) { // Check up to 7 squares in each direction
-                    ChessPosition newPosition = new ChessPosition(myPosition.getRow() + i * rowDelta, myPosition.getColumn() + i * colDelta);
-
-                    if (!isValidRookMove(board, newPosition)) {
-                        break;
-                    }
-
-                    validMoves.add(new ChessMove(myPosition, newPosition, null));
-
-                    // Check if the move captures an opponent's piece
-                    if (isValidRookCapture(board, newPosition)) {
-                        //validMoves.add(new Move(myPosition, newPosition, board.getPiece(newPosition).getPieceType()));
-                        break; // Stop if a capture occurs
-                    }
-                }
-            }
-        }
-        else {
-            throw new RuntimeException("Unknown PieceType: " + getPieceType());
-        }
         return validMoves;
     }
 }
