@@ -15,10 +15,12 @@ import java.util.Objects;
 public class ChessPiece {
     private final ChessGame.TeamColor teamColor;
     private final PieceType type;
+    private boolean hasMoved;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type) {
         this.teamColor = pieceColor;
         this.type = type;
+        this.hasMoved = false;
     }
 
     @Override
@@ -32,6 +34,15 @@ public class ChessPiece {
     @Override
     public int hashCode() {
         return Objects.hash(teamColor, type);
+    }
+
+    @Override
+    public String toString() {
+        return "ChessPiece{" +
+                "teamColor=" + teamColor +
+                ", type=" + type +
+                ", hasMoved=" + hasMoved +
+                '}';
     }
 
     /**
@@ -60,6 +71,14 @@ public class ChessPiece {
         return type;
     }
 
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
+    public void setHasMoved(boolean hasMoved) {
+        this.hasMoved = hasMoved;
+    }
+
     /**
      * @return whether the move is within board boundaries AND the target square is empty
      */
@@ -85,6 +104,30 @@ public class ChessPiece {
         ChessPiece checkPiece = board.getPiece(position);
         return board.isOnBoard(position.getRow(), position.getColumn()) && checkPiece != null && checkPiece.getTeamColor() != teamColor;
     }
+
+//    public boolean canCastle(ChessBoard board, ChessPosition myPosition) {
+//        if ((myPosition.getRow() != 8 && myPosition.getRow() != 1) || myPosition.getColumn() != 5 ||
+//                board.isSquareAttacked(myPosition.getRow(), myPosition.getColumn(), oppositeTeamColor, board)
+//        ) {
+//            return false;
+//        }
+//
+//        // Check if the squares between the king and queen-side rook are empty
+//        int myRow = myPosition.getRow();
+//        int myCol = myPosition.getColumn();
+//        for (int col = myCol - 1; col > myCol - 4; col--) {
+//            if (col >= 1 && board.getPiece(new ChessPosition(myRow, col)) != null) {
+//                return false;
+//            }
+//        }
+//
+//        return true;
+//    }
+//        for (int col = myCol + 1; col <= myCol + 2; col++) {
+//            if (col <= 8 && board.getPiece(new ChessPosition(myRow, col)) != null) {
+//                return false;
+//            }
+//        }
 
     /**
      * @return valid moves for sliding pieces
@@ -174,6 +217,15 @@ public class ChessPiece {
                     }
                 }
             }
+//            // Check if castling to the left is a valid move for the king
+//            if (canCastle(board, myPosition)) {
+//                validMoves.add(new ChessMove(myPosition, new ChessPosition(myRow, myCol - 2), null, true)); // Mark as a castling move
+//            }
+//
+//            // Check if castling to the right is a valid move for the king
+//            if (canCastle(board, myPosition)) {
+//                validMoves.add(new ChessMove(myPosition, new ChessPosition(myRow, myCol + 2), null, true)); // Mark as a castling move
+//            }
         }
 
         return validMoves;
@@ -202,6 +254,12 @@ public class ChessPiece {
             boolean notBlocked = isBlocked(myPosition, newRow2, direction, board);
             if (isValidMove(board, twoSquaresForward) && notBlocked) {
                 validMoves.add(new ChessMove(myPosition, twoSquaresForward, null));
+                // Set the En Passant target square for the opponent's pawn
+                int enPassantTargetRow = (teamColor == ChessGame.TeamColor.WHITE) ? 3 : 6;
+                board.setEnPassantPosition(new ChessPosition(enPassantTargetRow, myPosition.getColumn()));
+            } else {
+                // Clear the En Passant target square for the opponent
+                board.setEnPassantPosition(null);
             }
         }
     }
@@ -217,6 +275,19 @@ public class ChessPiece {
                     addPromotionMoves(validMoves, myPosition, capturePos);
                 } else {
                     validMoves.add(new ChessMove(myPosition, capturePos, null));
+                }
+            } else {
+                // Check for En Passant capture on the left side
+                ChessPosition enPassantPosition = new ChessPosition(myPosition.getRow() + direction, myPosition.getColumn());
+                if (board.getEnPassantPosition() != null && enPassantPosition.equals(board.getEnPassantPosition())) {
+                    // Check if there's an opponent's pawn in the En Passant target square
+                    int enPassantTargetRow = (teamColor == ChessGame.TeamColor.WHITE) ? 5 : 4;
+                    ChessPosition enPassantTarget = new ChessPosition(enPassantTargetRow, myPosition.getColumn());
+                    ChessPiece enPassantTargetPiece = board.getPiece(enPassantTarget);
+                    if (enPassantTargetPiece != null && enPassantTargetPiece.getTeamColor() != teamColor &&
+                            enPassantTargetPiece.getPieceType() == PieceType.PAWN && enPassantPosition.equals(board.getEnPassantPosition())) {
+                        validMoves.add(new ChessMove(myPosition, capturePos, null, true));
+                    }
                 }
             }
         }
@@ -240,4 +311,6 @@ public class ChessPiece {
         validMoves.add(new ChessMove(position, newPosition, PieceType.QUEEN));
         validMoves.add(new ChessMove(position, newPosition, PieceType.ROOK));
     }
+
+
 }
