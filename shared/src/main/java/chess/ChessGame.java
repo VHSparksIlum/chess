@@ -26,6 +26,8 @@ public class ChessGame {
     public ChessGame() {
         this.board = new ChessBoard();
         this.teamTurn = TeamColor.WHITE;
+        setTeamTurn(teamTurn);
+        board.resetBoard(); //allows board to be set for junit tests that need new board
     }
 
     /**
@@ -42,6 +44,7 @@ public class ChessGame {
      */
     public void setTeamTurn(TeamColor team) {
         teamTurn = team;
+        oppositeTeamColor = (team == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
 
     /**
@@ -162,15 +165,15 @@ public class ChessGame {
         board.removePiece(startPosition);
         board.addPiece(endPosition, piece);
 
-//            // Check if the move is a one-square move for a pawn
-//            if (ChessPiece.PieceType.PAWN) { // && Math.abs(startPosition.getRow() - endPosition.getRow()) == 1) {
-//                piece.setHasMoved(true);
-//            }
-//
-//            // Check if the move is an initial two-square move for a pawn
-//            if (piece instanceof Pawn) { // && Math.abs(startPosition.getRow() - endPosition.getRow()) == 2) {
-//                piece.setHasMoved(true);
-//            }
+            // Check if the move is a one-square move for a pawn
+            if (piece.getPieceType() == ChessPiece.PieceType.PAWN && (endPosition.getRow() == 3 || endPosition.getRow() == 6)) {
+                piece.setHasMoved(true);
+            }
+
+            // Check if the move is an initial two-square move for a pawn
+            if (piece.getPieceType() == ChessPiece.PieceType.PAWN && (endPosition.getRow() == 4 || endPosition.getRow() == 5)) {
+                piece.setHasMoved(true);
+            }
 //
 //            if (piece instanceof King || piece instanceof Rook) {
 //                piece.setHasMoved(true);
@@ -197,7 +200,7 @@ public class ChessGame {
 
         //THIS SHOULD BE UPDATED - COPY???****************************************************
         // Check if the move puts the current player's king in check
-        if(anyPieceHasMoved) {
+        //if(anyPieceHasMoved) {
             if (isInCheck(teamTurn)) {
                 // If the move puts the player's king in check, it's an invalid move
                 // Roll back the move
@@ -209,7 +212,7 @@ public class ChessGame {
 
                 throw new InvalidMoveException("The move puts your king in check.");
             }
-        }
+        //}
 
             // Check if the moved piece is a pawn that has reached the promotion rank
             if (piece.getPieceType() == ChessPiece.PieceType.PAWN && (endPosition.getRow() == 1 || endPosition.getRow() == 8)) {
@@ -221,9 +224,9 @@ public class ChessGame {
 
         // Move is valid; update the team turn
         if (teamTurn == TeamColor.WHITE) {
-            teamTurn = TeamColor.BLACK;
+            setTeamTurn(TeamColor.BLACK);
         } else {
-            teamTurn = TeamColor.WHITE;
+            setTeamTurn(TeamColor.WHITE);
         }
     }
 

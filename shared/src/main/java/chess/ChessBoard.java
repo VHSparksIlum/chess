@@ -17,7 +17,6 @@ public class ChessBoard {
 
     public ChessBoard() {
         this.board = new ChessPiece[8][8];
-        //initializeDefaultBoard(); //ISSUE IS BOARD IS NOT LOADING SCENARIOS
     }
 
     /**
@@ -247,12 +246,30 @@ public class ChessBoard {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ChessBoard that = (ChessBoard) o;
-        return hasEnPassantBeenSet == that.hasEnPassantBeenSet && Objects.deepEquals(board, that.board) && Objects.equals(enPassantPosition, that.enPassantPosition);
+        return Objects.deepEquals(board, that.board);
+        // hasEnPassantBeenSet == that.hasEnPassantBeenSet && Objects.equals(enPassantPosition, that.enPassantPosition);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(Arrays.deepHashCode(board), enPassantPosition, hasEnPassantBeenSet);
+        return Objects.hash(Arrays.deepHashCode(board));//, enPassantPosition, hasEnPassantBeenSet);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = getPiece(position);
+                if (piece != null) {
+                    sb.append(piece.getTeamColor()).append(" ").append(piece.getPieceType()).append(" at ").append(position).append("\n");
+                } else {
+                    sb.append("No piece at ").append(position).append("\n");
+                }
+            }
+        }
+        return sb.toString();
     }
 
     public String toString(ChessPosition position) {
