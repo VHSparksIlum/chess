@@ -17,7 +17,7 @@ public class ChessBoard {
 
     public ChessBoard() {
         this.board = new ChessPiece[8][8];
-        initializeDefaultBoard(); //ISSUE IS BOARD IS NOT LOADING SCENARIOS
+        //initializeDefaultBoard(); //ISSUE IS BOARD IS NOT LOADING SCENARIOS
     }
 
     /**

@@ -60,7 +60,64 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        // Check if there is a piece at the specified position and if it's the correct team's turn
+        ChessPiece piece = this.board.getPiece(startPosition);
+        if (piece == null) {
+            return Collections.emptyList(); // Return an empty collection if no valid moves are possible
+        }
+
+        // Calculate and return valid moves for the piece
+        Collection<ChessMove> validMoves = new ArrayList<>(piece.pieceMoves(this.board, startPosition));
+
+        // Filter out en passant moves if any piece has moved since en passant position was set
+//        if (anyPieceHasMoved) {
+//            validMoves.removeIf(move -> isEnPassantMove(move, piece));
+//        }
+        // Filter out castling moves if king or rook have moved
+//        if (anyPieceHasMoved) {
+//            validMoves.removeIf(move -> {
+//                // Check if it's a castling move
+//                if (isCastlingMove(move, piece)) {
+//                    if (piece instanceof Rook rook) {
+//                        // Determine if it's the king-side or queen-side rook
+//                        if (rook.equals(getKingSideRook(move, piece))) {
+//                            // Filter out king-side castling for the King-side Rook if it has moved
+//                            return rook.hasMoved();
+//                        } else if (rook.equals(getQueenSideRook(move, piece))) {
+//                            // Filter out queen-side castling for the Queen-side Rook if it has moved
+//                            return rook.hasMoved();
+//                        }
+//                    } else if (piece instanceof King) {
+//                        // Filter out castling for the King if it has already moved
+//                        return piece.hasMoved();
+//                    }
+//                }
+//                return false;
+//            });
+//        }
+
+        // Filter out moves that would put the king in check
+        validMoves.removeIf(move -> {
+            // Execute the move temporarily
+            ChessPosition endPosition = move.getEndPosition();
+            ChessPiece capturedPiece = this.board.getPiece(endPosition);
+            this.board.removePiece(startPosition);
+            this.board.addPiece(endPosition, piece);
+
+            // Check if the move puts the king in check
+            boolean putsKingInCheck = isInCheck(piece.getTeamColor());
+
+            // Rollback the move
+            this.board.removePiece(endPosition);
+            this.board.addPiece(startPosition, piece);
+            if (capturedPiece != null) {
+                this.board.addPiece(endPosition, capturedPiece);
+            }
+
+            return putsKingInCheck;
+        });
+//        System.out.println(validMoves);
+        return validMoves;
     }
 
     /**
