@@ -89,11 +89,13 @@ public class ChessBoard {
      */
     public void promotePawn(ChessPosition position, ChessPiece.PieceType promotionPiece) {
         ChessPiece piece = getPiece(position);
-        ChessPiece promotion = selectPromotion(promotionPiece);
-        if (piece != null) {
+        if (piece != null && piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+            // Get the team color of the pawn to be promoted
+            ChessGame.TeamColor teamColor = piece.getTeamColor();
+            // Create the promoted piece
+            ChessPiece promotion = selectPromotion(teamColor, promotionPiece);
             // Remove the pawn
             removePiece(position);
-
             // Add the promoted piece to the same position
             addPiece(position, promotion); // May need to modify based on how player will decide piece to promote to
         } else {
@@ -101,18 +103,19 @@ public class ChessBoard {
         }
     }
 
-    private ChessPiece selectPromotion(ChessPiece.PieceType promotionPiece) {
-        if (promotionPiece == ChessPiece.PieceType.QUEEN) {
-            throw new RuntimeException("QUEEN");
-        } else if (promotionPiece == ChessPiece.PieceType.BISHOP) {
-            throw new RuntimeException("BISHOP");
-        } else if (promotionPiece == ChessPiece.PieceType.KNIGHT) {
-            throw new RuntimeException("KNIGHT");
-        } else if (promotionPiece == ChessPiece.PieceType.ROOK) {
-            throw new RuntimeException("ROOK");
-        } else {
-            throw new RuntimeException("No promotion piece selected");
-        }
+    private ChessPiece selectPromotion(ChessGame.TeamColor teamColor, ChessPiece.PieceType promotionPiece) {
+        return new ChessPiece(teamColor, promotionPiece);
+//        if (promotionPiece == ChessPiece.PieceType.QUEEN) {
+//            throw new RuntimeException("QUEEN");
+//        } else if (promotionPiece == ChessPiece.PieceType.BISHOP) {
+//            throw new RuntimeException("BISHOP");
+//        } else if (promotionPiece == ChessPiece.PieceType.KNIGHT) {
+//            throw new RuntimeException("KNIGHT");
+//        } else if (promotionPiece == ChessPiece.PieceType.ROOK) {
+//            throw new RuntimeException("ROOK");
+//        } else {
+//            throw new RuntimeException("No promotion piece selected");
+//        }
     }
 
     public boolean isSquareAttacked(int row, int col, ChessGame.TeamColor attackingTeam, ChessBoard board) {
