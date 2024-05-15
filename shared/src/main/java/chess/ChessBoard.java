@@ -14,6 +14,8 @@ public class ChessBoard {
     private ChessPiece[][] board;
     private ChessPosition enPassantPosition;
     public boolean hasEnPassantBeenSet = false;
+    boolean whiteHasMovedPawn = false;
+    boolean blackHasMovedPawn = false;
 
     public ChessBoard() {
         this.board = new ChessPiece[8][8];
@@ -78,6 +80,14 @@ public class ChessBoard {
 
     public boolean hasEnPassantBeenSet() {
         return false;
+    }
+
+    public boolean hasTeamMoved(ChessGame.TeamColor teamColor) {
+        if (teamColor == ChessGame.TeamColor.WHITE) {
+            return whiteHasMovedPawn;
+        } else {
+            return blackHasMovedPawn;
+        }
     }
 
     /**

@@ -15,7 +15,6 @@ public class ChessGame {
     private ChessBoard board;
     private TeamColor teamTurn;
     private TeamColor oppositeTeamColor;
-    boolean anyPieceHasMoved = false;
 
     public ChessGame(TeamColor teamTurn) {
         this.board = new ChessBoard();
@@ -73,11 +72,11 @@ public class ChessGame {
         Collection<ChessMove> validMoves = new ArrayList<>(piece.pieceMoves(this.board, startPosition));
 
         // Filter out en passant moves if any piece has moved since en passant position was set
-        if (anyPieceHasMoved) {
+        if (board.hasTeamMoved(teamTurn)) {
             validMoves.removeIf(move -> isEnPassantMove(move, piece));
         }
         // Filter out castling moves if king or rook have moved
-//        if (anyPieceHasMoved) {
+//        if (hasTeamMoved) {
 //            validMoves.removeIf(move -> {
 //                // Check if it's a castling move
 //                if (isCastlingMove(move, piece)) {
@@ -179,12 +178,12 @@ public class ChessGame {
                 piece.setHasMoved(true);
             }
 
-            // Check if any piece has moved (excluding pawns)
-            if (piece.getPieceType() != ChessPiece.PieceType.PAWN && Math.abs(startPosition.getRow() - endPosition.getRow()) == 2) {
-                anyPieceHasMoved = true;
-            } else {
-                anyPieceHasMoved = false;
-            }
+        // Check if any piece has moved (excluding pawns)
+        if (!(piece.getPieceType() == ChessPiece.PieceType.PAWN && Math.abs(startPosition.getRow() - endPosition.getRow()) == 2) && piece.getTeamColor() == TeamColor.WHITE) {
+            board.whiteHasMovedPawn = true;
+        } else {
+            board.blackHasMovedPawn = false;
+        }
 
 //            // When an opponent's pawn moves two squares forward, set the en passant position.
             if (piece.getPieceType() == ChessPiece.PieceType.PAWN && Math.abs(startPosition.getRow() - endPosition.getRow()) == 2) {
@@ -200,7 +199,7 @@ public class ChessGame {
 
         //THIS SHOULD BE UPDATED - COPY???****************************************************
         // Check if the move puts the current player's king in check
-        //if(anyPieceHasMoved) {
+        //if(hasTeamMoved) {
             if (isInCheck(teamTurn)) {
                 // If the move puts the player's king in check, it's an invalid move
                 // Roll back the move
@@ -576,7 +575,6 @@ public class ChessGame {
 
     public boolean isValidEnPassantCapture(ChessMove move) {
         ChessPosition enPassantPosition = move.getEndPosition();
-        ChessPosition capturedPawnPosition;
 
         // Check if the move is a two-square diagonal move by a pawn
         if (Math.abs(move.getStartPosition().getColumn() - enPassantPosition.getColumn()) == 1
@@ -587,7 +585,7 @@ public class ChessGame {
                 int direction = (teamTurn == TeamColor.WHITE) ? 1 : -1; // Adjust the direction
 
                 // Determine the square where the captured pawn should be
-                capturedPawnPosition = new ChessPosition(enPassantPosition.getRow() - direction, enPassantPosition.getColumn());
+                ChessPosition capturedPawnPosition = new ChessPosition(enPassantPosition.getRow() - direction, enPassantPosition.getColumn());
 
                 ChessPiece capturedPawn = board.getPiece(capturedPawnPosition);
 
@@ -623,12 +621,12 @@ public class ChessGame {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ChessGame chessGame = (ChessGame) o;
-        return anyPieceHasMoved == chessGame.anyPieceHasMoved && Objects.equals(board, chessGame.board) && teamTurn == chessGame.teamTurn;
+        return Objects.equals(board, chessGame.board) && teamTurn == chessGame.teamTurn && oppositeTeamColor == chessGame.oppositeTeamColor;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(board, teamTurn, anyPieceHasMoved);
+        return Objects.hash(board, teamTurn, oppositeTeamColor);
     }
 
     @Override
@@ -636,7 +634,7 @@ public class ChessGame {
         return "ChessGame{" +
                 "board=" + board +
                 ", teamTurn=" + teamTurn +
-                ", anyPieceHasMoved=" + anyPieceHasMoved +
+                ", oppositeTeamColor=" + oppositeTeamColor +
                 '}';
     }
 }
