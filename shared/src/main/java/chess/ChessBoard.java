@@ -91,13 +91,9 @@ public class ChessBoard {
     public void promotePawn(ChessPosition position, ChessPiece.PieceType promotionPiece) {
         ChessPiece piece = getPiece(position);
         if (piece != null && piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-            // Get the team color of the pawn to be promoted
             ChessGame.TeamColor teamColor = piece.getTeamColor();
-            // Create the promoted piece
             ChessPiece promotion = selectPromotion(teamColor, promotionPiece);
-            // Remove the pawn
             removePiece(position);
-            // Add the promoted piece to the same position
             addPiece(position, promotion); // May need to modify based on how player will decide piece to promote to
         } else {
             throw new IllegalArgumentException("Invalid promotion: The specified position does not contain a pawn.");
@@ -157,8 +153,6 @@ public class ChessBoard {
         // Kings
         addPiece(new ChessPosition(1, 5), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING));
         addPiece(new ChessPosition(8, 5), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING));
-
-
     }
 
     @Override
