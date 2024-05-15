@@ -82,11 +82,8 @@ public class ChessGame {
                 // Get the relevant rook for this castling move
                 ChessPiece rook = getRookForCastling(move, piece, board);
 
-                // Check if the rook has moved
-                if ((piece.getPieceType() == ChessPiece.PieceType.KING && piece.hasMoved()) || (rook != null && rook.hasMoved())) {
-//                    System.out.println("Removing castling move because the king or the rook has moved: " + move);
-                    return true; // Indicates that the move should be removed
-                }
+                // Check if the king or rook has moved
+                return (piece.getPieceType() == ChessPiece.PieceType.KING && piece.hasMoved()) || (rook != null && rook.hasMoved());
             }
             return false;
         });
@@ -118,15 +115,13 @@ public class ChessGame {
     /**
      * Makes a move in a chess game
      *
-     * @param move chess move to preform
+     * @param move chess move to perform
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-
         // Check if there is a piece at the specified start position
         ChessPosition startPosition = move.getStartPosition();
         ChessPiece piece = board.getPiece(startPosition);
-
 
         if (piece == null) {
             throw new InvalidMoveException("No piece at the specified start position.");
@@ -192,13 +187,10 @@ public class ChessGame {
 
 //            // Check if the move is en passant
             if (isEnPassantMove(move, piece)) {
-                // Handle the en passant capture
                 handleEnPassantCapture(move);
             }
 
-        //THIS SHOULD BE UPDATED - COPY???****************************************************
         // Check if the move puts the current player's king in check
-        //if(hasTeamMoved) {
             if (isInCheck(teamTurn)) {
                 // If the move puts the player's king in check, it's an invalid move
                 // Roll back the move
@@ -210,24 +202,18 @@ public class ChessGame {
 
                 throw new InvalidMoveException("The move puts your king in check.");
             }
-        //}
 
             // Check if the moved piece is a pawn that has reached the promotion rank
             if (piece.getPieceType() == ChessPiece.PieceType.PAWN && (endPosition.getRow() == 1 || endPosition.getRow() == 8)) {
                 // The chosen piece type should be derived from the Move object
                 ChessPiece.PieceType chosenPieceType = move.getPromotionPiece();
-                // Handle the pawn promotion
                 handlePawnPromotion(endPosition, chosenPieceType);
             }
 
 //        System.out.println("Moving " + piece.getPieceType() + " to position: " + move);
-
         // Move is valid; update the team turn
-        if (teamTurn == TeamColor.WHITE) {
-            setTeamTurn(TeamColor.BLACK);
-        } else {
-            setTeamTurn(TeamColor.WHITE);
-        }
+        setTeamTurn(teamTurn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
+
     }
 
     /**
@@ -407,12 +393,12 @@ public class ChessGame {
         return board;
     }
 
-//    //EXTRA CREDIT MOVES
+//  EXTRA CREDIT MOVES
     // Function to check if a move is a castling move
     private boolean isCastlingMove(ChessMove move, ChessPiece piece) {
         if (piece.getPieceType() == ChessPiece.PieceType.KING) {
             // King-side castling
-            if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 2) {
+            if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 2 || Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 3) {
                 int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
                 int row = move.getEndPosition().getRow();
                 int startCol = move.getStartPosition().getColumn();
@@ -434,35 +420,11 @@ public class ChessGame {
                     }
                 }
 
-                return true; // Valid castling move
-            }
-            // Queen-side castling
-            else if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 3) {
-                int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
-                int row = move.getEndPosition().getRow();
-                int startCol = move.getStartPosition().getColumn();
-                int targetCol = move.getEndPosition().getColumn();
-
-                if (direction == 1) {
-                    // Check if squares between king and rook are empty (king-side)
-                    for (int col = startCol + 1; col < targetCol; col++) {
-                        if (board.getPiece(new ChessPosition(row, col)) != null) {
-                            return false; // Invalid castling
-                        }
-                    }
-                } else {
-                    // Check if squares between king and rook are empty (queen-side)
-                    for (int col = startCol - 1; col > targetCol; col--) {
-                        if (board.getPiece(new ChessPosition(row, col)) != null) {
-                            return false; // Invalid castling
-                        }
-                    }
-                }
-                System.out.println(move + " move is a valid castling move: ");
+                //System.out.println(move + " move is a valid castling move: ");
                 return true; // Valid castling move
             }
         }
-        System.out.println(move + " move is NOT a valid castling move: ");
+        //System.out.println(move + " move is NOT a valid castling move: ");
         return false; // Not a castling move
     }
 
@@ -472,12 +434,13 @@ public class ChessGame {
 //            // King-side castling
         int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
         int row = move.getEndPosition().getRow();
+        ChessPosition kingStartPosition = new ChessPosition(row, 5);
+        ChessPosition kingEndPosition;
+        board.removePiece(kingStartPosition);
 
         if (direction == 1) {
             // Move king (king-side castling)
-            ChessPosition kingStartPosition = new ChessPosition(row, 5);
-            ChessPosition kingEndPosition = new ChessPosition(row, 7);
-            board.removePiece(kingStartPosition);
+            kingEndPosition = new ChessPosition(row, 7);
             board.addPiece(kingEndPosition, king);
             // Move rook (king-side castling)
             ChessPosition rookStartPosition = new ChessPosition(row, 8);
@@ -486,9 +449,7 @@ public class ChessGame {
             board.addPiece(rookEndPosition, rook);
         } else {
             // Move king (queen-side castling)
-            ChessPosition kingStartPosition = new ChessPosition(row, 5);
-            ChessPosition kingEndPosition = new ChessPosition(row, 3);
-            board.removePiece(kingStartPosition);
+            kingEndPosition = new ChessPosition(row, 3);
             board.addPiece(kingEndPosition, king);
             // Move rook (queen-side castling)
             ChessPosition rookStartPosition = new ChessPosition(row, 1);

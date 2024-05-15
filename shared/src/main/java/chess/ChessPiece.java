@@ -122,12 +122,6 @@ public class ChessPiece {
         }
 
         return true;
-
-//        for (int col = myCol + 1; col <= myCol + 2; col++) {
-//            if (col <= 8 && board.getPiece(new ChessPosition(myRow, col)) != null) {
-//                return false;
-//            }
-//        }
     }
 
 

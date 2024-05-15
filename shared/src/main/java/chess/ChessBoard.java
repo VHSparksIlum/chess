@@ -1,7 +1,6 @@
 package chess;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -52,14 +51,6 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        // Debug statement to log information about the piece
-//        ChessPiece piece = this.board[position.getRow() - 1][position.getColumn() - 1];
-//        if (piece != null) {
-//            System.out.println("Getting piece at position " + position + ": " + piece.getTeamColor() + " " + piece.getPieceType());
-//        } else {
-//            System.out.println("Getting piece at position " + position + ": null");
-//        }
-
         return this.board[position.getRow() - 1][position.getColumn() - 1];
     }
 
@@ -115,17 +106,6 @@ public class ChessBoard {
 
     private ChessPiece selectPromotion(ChessGame.TeamColor teamColor, ChessPiece.PieceType promotionPiece) {
         return new ChessPiece(teamColor, promotionPiece);
-//        if (promotionPiece == ChessPiece.PieceType.QUEEN) {
-//            throw new RuntimeException("QUEEN");
-//        } else if (promotionPiece == ChessPiece.PieceType.BISHOP) {
-//            throw new RuntimeException("BISHOP");
-//        } else if (promotionPiece == ChessPiece.PieceType.KNIGHT) {
-//            throw new RuntimeException("KNIGHT");
-//        } else if (promotionPiece == ChessPiece.PieceType.ROOK) {
-//            throw new RuntimeException("ROOK");
-//        } else {
-//            throw new RuntimeException("No promotion piece selected");
-//        }
     }
 
     /**
@@ -194,23 +174,6 @@ public class ChessBoard {
     public int hashCode() {
         return Objects.hash(Arrays.deepHashCode(board));//, enPassantPosition, hasEnPassantBeenSet);
     }
-
-//    @Override
-//    public String toString() {
-//        StringBuilder sb = new StringBuilder();
-//        for (int row = 1; row <= 8; row++) {
-//            for (int col = 1; col <= 8; col++) {
-//                ChessPosition position = new ChessPosition(row, col);
-//                ChessPiece piece = getPiece(position);
-//                if (piece != null) {
-//                    sb.append(piece.getTeamColor()).append(" ").append(piece.getPieceType()).append(" at ").append(position).append("\n");
-//                } else {
-//                    sb.append("No piece at ").append(position).append("\n");
-//                }
-//            }
-//        }
-//        return sb.toString();
-//    }
 
     public String toString(ChessPosition position) {
         ChessPiece piece = getPiece(position);
