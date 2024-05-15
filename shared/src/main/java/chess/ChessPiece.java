@@ -105,29 +105,31 @@ public class ChessPiece {
         return board.isOnBoard(position.getRow(), position.getColumn()) && checkPiece != null && checkPiece.getTeamColor() != teamColor;
     }
 
-//    public boolean canCastle(ChessBoard board, ChessPosition myPosition) {
-//        if ((myPosition.getRow() != 8 && myPosition.getRow() != 1) || myPosition.getColumn() != 5 ||
-//                board.isSquareAttacked(myPosition.getRow(), myPosition.getColumn(), oppositeTeamColor, board)
-//        ) {
-//            return false;
-//        }
-//
-//        // Check if the squares between the king and queen-side rook are empty
-//        int myRow = myPosition.getRow();
-//        int myCol = myPosition.getColumn();
-//        for (int col = myCol - 1; col > myCol - 4; col--) {
-//            if (col >= 1 && board.getPiece(new ChessPosition(myRow, col)) != null) {
-//                return false;
-//            }
-//        }
-//
-//        return true;
-//    }
+    public boolean canCastle(ChessBoard board, ChessPosition myPosition) {
+        if ((myPosition.getRow() != 8 && myPosition.getRow() != 1) || myPosition.getColumn() != 5 ||
+                isSquareAttacked(myPosition.getRow(), myPosition.getColumn(), board))
+        {
+            return false;
+        }
+
+        // Check if the squares between the king and queen-side rook are empty
+        int myRow = myPosition.getRow();
+        int myCol = myPosition.getColumn();
+        for (int col = myCol - 1; col > myCol - 4; col--) {
+            if (col >= 1 && board.getPiece(new ChessPosition(myRow, col)) != null) {
+                return false;
+            }
+        }
+
+        return true;
+
 //        for (int col = myCol + 1; col <= myCol + 2; col++) {
 //            if (col <= 8 && board.getPiece(new ChessPosition(myRow, col)) != null) {
 //                return false;
 //            }
 //        }
+    }
+
 
     /**
      * @return valid moves for sliding pieces
@@ -217,15 +219,15 @@ public class ChessPiece {
                     }
                 }
             }
-//            // Check if castling to the left is a valid move for the king
-//            if (canCastle(board, myPosition)) {
-//                validMoves.add(new ChessMove(myPosition, new ChessPosition(myRow, myCol - 2), null, true)); // Mark as a castling move
-//            }
-//
-//            // Check if castling to the right is a valid move for the king
-//            if (canCastle(board, myPosition)) {
-//                validMoves.add(new ChessMove(myPosition, new ChessPosition(myRow, myCol + 2), null, true)); // Mark as a castling move
-//            }
+            // Check if castling to the left is a valid move for the king
+            if (canCastle(board, myPosition)) {
+                validMoves.add(new ChessMove(myPosition, new ChessPosition(myPosition.getRow(), myPosition.getColumn() - 2), null, true)); // Mark as a castling move
+            }
+
+            // Check if castling to the right is a valid move for the king
+            if (canCastle(board, myPosition)) {
+                validMoves.add(new ChessMove(myPosition, new ChessPosition(myPosition.getRow(), myPosition.getColumn() + 2), null, true)); // Mark as a castling move
+            }
         }
 
         return validMoves;
@@ -291,6 +293,67 @@ public class ChessPiece {
                 }
             }
         }
+    }
+
+    public boolean isSquareAttacked(int row, int col, ChessBoard board) {
+
+        // Ensure that the row and col are within the bounds of the chessboard
+        if (row < 1 || row > 8 || col < 1 || col > 8) {
+            return false;
+        }
+
+        // Check if any opponent piece (of the attacking team's color) can attack the specified square
+        for (int r = 1; r < 8; r++) {
+            for (int c = 1; c < 8; c++) {
+                ChessPiece piece = board.getPiece(new ChessPosition(r, c));
+                //****************IS THIS WRONG??***********************
+                if (piece != null && piece.getTeamColor() != teamColor) {
+                    if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                        if (isKingAttackingSquare(board, new ChessPosition(r, c), new ChessPosition(row, col))) {
+                            return true;
+                        }
+                    } else {
+                        Collection<ChessMove> pieceMoves = piece.pieceMoves(board, new ChessPosition(r, c));
+                        for (ChessMove move : pieceMoves) {
+                            if (move.getEndPosition().getRow() == row && move.getEndPosition().getColumn()-1 == col) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Helper function for checking is square is under attack
+    private boolean isKingAttackingSquare(ChessBoard board, ChessPosition kingPosition, ChessPosition squarePosition) {
+        // Get the row and column of the king
+        int kingRow = kingPosition.getRow();
+        int kingCol = kingPosition.getColumn();
+
+        // Get the row and column of the square to be checked
+//        int targetRow = squarePosition.getRow();
+//        int targetCol = squarePosition.getColumn();
+
+        // Define the eight possible directions a king can move
+        int[] rowDirections = { -1, -1, -1, 0, 0, 1, 1, 1 };
+        int[] colDirections = { -1, 0, 1, -1, 1, -1, 0, 1 };
+
+        for (int i = 0; i < 8; i++) {
+            int newRow = kingRow + rowDirections[i];
+            int newCol = kingCol + colDirections[i];
+
+            ChessPosition newPosition = new ChessPosition(newRow, newCol);
+
+            // Check if the new position is on the chessboard
+            if (board.isOnBoard(newRow, newCol) && newPosition.equals(squarePosition)) {
+                // If the target square matches the specified square, the king can attack it
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private boolean isBlocked(ChessPosition startPos, int endRow, int direction, ChessBoard board) {

@@ -76,27 +76,20 @@ public class ChessGame {
             validMoves.removeIf(move -> isEnPassantMove(move, piece));
         }
         // Filter out castling moves if king or rook have moved
-//        if (hasTeamMoved) {
-//            validMoves.removeIf(move -> {
-//                // Check if it's a castling move
-//                if (isCastlingMove(move, piece)) {
-//                    if (piece instanceof Rook rook) {
-//                        // Determine if it's the king-side or queen-side rook
-//                        if (rook.equals(getKingSideRook(move, piece))) {
-//                            // Filter out king-side castling for the King-side Rook if it has moved
-//                            return rook.hasMoved();
-//                        } else if (rook.equals(getQueenSideRook(move, piece))) {
-//                            // Filter out queen-side castling for the Queen-side Rook if it has moved
-//                            return rook.hasMoved();
-//                        }
-//                    } else if (piece instanceof King) {
-//                        // Filter out castling for the King if it has already moved
-//                        return piece.hasMoved();
-//                    }
-//                }
-//                return false;
-//            });
-//        }
+        validMoves.removeIf(move -> {
+            // Check if it's a castling move
+            if (isCastlingMove(move, piece)) {
+                // Get the relevant rook for this castling move
+                ChessPiece rook = getRookForCastling(move, piece, board);
+
+                // Check if the rook has moved
+                if ((piece.getPieceType() == ChessPiece.PieceType.KING && piece.hasMoved()) || (rook != null && rook.hasMoved())) {
+//                    System.out.println("Removing castling move because the king or the rook has moved: " + move);
+                    return true; // Indicates that the move should be removed
+                }
+            }
+            return false;
+        });
 
         // Filter out moves that would put the king in check
         validMoves.removeIf(move -> {
@@ -118,7 +111,7 @@ public class ChessGame {
 
             return putsKingInCheck;
         });
-//        System.out.println(validMoves);
+        //System.out.println(validMoves);
         return validMoves;
     }
 
@@ -154,6 +147,12 @@ public class ChessGame {
         // Check if the specified move is a valid move for the piece
         if (!validMoves.contains(move)) {
             throw new InvalidMoveException("The specified move is not a valid move for the piece.");
+        }
+
+        // Check if the move is a castling move
+        if (isCastlingMove(move, piece)) {
+            // Perform castling and update the board
+            performCastling(move, piece, getRookForCastling(move, piece, board));
         }
 
         // Execute the move
@@ -220,6 +219,8 @@ public class ChessGame {
                 // Handle the pawn promotion
                 handlePawnPromotion(endPosition, chosenPieceType);
             }
+
+//        System.out.println("Moving " + piece.getPieceType() + " to position: " + move);
 
         // Move is valid; update the team turn
         if (teamTurn == TeamColor.WHITE) {
@@ -407,141 +408,130 @@ public class ChessGame {
     }
 
 //    //EXTRA CREDIT MOVES
-//    // Function to check if a move is a castling move
-//    private boolean isCastlingMove(ChessMove move, ChessPiece piece) {
-//        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+    // Function to check if a move is a castling move
+    private boolean isCastlingMove(ChessMove move, ChessPiece piece) {
+        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+            // King-side castling
+            if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 2) {
+                int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
+                int row = move.getEndPosition().getRow();
+                int startCol = move.getStartPosition().getColumn();
+                int targetCol = move.getEndPosition().getColumn();
+
+                if (direction == 1) {
+                    // Check if squares between king and rook are empty (king-side)
+                    for (int col = startCol + 1; col < targetCol; col++) {
+                        if (board.getPiece(new ChessPosition(row, col)) != null) {
+                            return false; // Invalid castling
+                        }
+                    }
+                } else {
+                    // Check if squares between king and rook are empty (queen-side)
+                    for (int col = startCol - 1; col > targetCol; col--) {
+                        if (board.getPiece(new ChessPosition(row, col)) != null) {
+                            return false; // Invalid castling
+                        }
+                    }
+                }
+
+                return true; // Valid castling move
+            }
+            // Queen-side castling
+            else if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 3) {
+                int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
+                int row = move.getEndPosition().getRow();
+                int startCol = move.getStartPosition().getColumn();
+                int targetCol = move.getEndPosition().getColumn();
+
+                if (direction == 1) {
+                    // Check if squares between king and rook are empty (king-side)
+                    for (int col = startCol + 1; col < targetCol; col++) {
+                        if (board.getPiece(new ChessPosition(row, col)) != null) {
+                            return false; // Invalid castling
+                        }
+                    }
+                } else {
+                    // Check if squares between king and rook are empty (queen-side)
+                    for (int col = startCol - 1; col > targetCol; col--) {
+                        if (board.getPiece(new ChessPosition(row, col)) != null) {
+                            return false; // Invalid castling
+                        }
+                    }
+                }
+                System.out.println(move + " move is a valid castling move: ");
+                return true; // Valid castling move
+            }
+        }
+        System.out.println(move + " move is NOT a valid castling move: ");
+        return false; // Not a castling move
+    }
+
+    // Perform the castling move
+    private void performCastling(ChessMove move, ChessPiece king, ChessPiece rook) throws InvalidMoveException {
+//        if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 2) {
 //            // King-side castling
-//            if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 2) {
-//                int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
-//                int row = move.getEndPosition().getRow();
-//                int startCol = move.getStartPosition().getColumn();
-//                int targetCol = move.getEndPosition().getColumn();
-//
-//                if (direction == 1) {
-//                    // Check if squares between king and rook are empty (king-side)
-//                    for (int col = startCol + 1; col < targetCol; col++) {
-//                        if (board.getPiece(new ChessPosition(row, col)) != null) {
-//                            return false; // Invalid castling
-//                        }
-//                    }
-//                } else {
-//                    // Check if squares between king and rook are empty (queen-side)
-//                    for (int col = startCol - 1; col > targetCol; col--) {
-//                        if (board.getPiece(new ChessPosition(row, col)) != null) {
-//                            return false; // Invalid castling
-//                        }
-//                    }
-//                }
-//
-//                return true; // Valid castling move
-//            }
-//            // Queen-side castling
-//            else if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 3) {
-//                int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
-//                int row = move.getEndPosition().getRow();
-//                int startCol = move.getStartPosition().getColumn();
-//                int targetCol = move.getEndPosition().getColumn();
-//
-//                if (direction == 1) {
-//                    // Check if squares between king and rook are empty (king-side)
-//                    for (int col = startCol + 1; col < targetCol; col++) {
-//                        if (board.getPiece(new ChessPosition(row, col)) != null) {
-//                            return false; // Invalid castling
-//                        }
-//                    }
-//                } else {
-//                    // Check if squares between king and rook are empty (queen-side)
-//                    for (int col = startCol - 1; col > targetCol; col--) {
-//                        if (board.getPiece(new ChessPosition(row, col)) != null) {
-//                            return false; // Invalid castling
-//                        }
-//                    }
-//                }
-//
-//                return true; // Valid castling move
-//            }
-//        }
-//        return false; // Not a castling move
-//    }
-//
-//    // Perform the castling move
-//    private void performCastling(ChessMove move, ChessPiece king, Rook rook) throws InvalidMoveException {
-////        if (Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 2) {
-////            // King-side castling
-//        int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
-//        int row = move.getEndPosition().getRow();
-//
-//        if (direction == 1) {
-//            // Move king (king-side castling)
-//            ChessPosition kingStartPosition = new ChessPosition(row, 5);
-//            ChessPosition kingEndPosition = new ChessPosition(row, 7);
-//            board.removePiece(kingStartPosition);
-//            board.addPiece(kingEndPosition, king);
-//            // Move rook (king-side castling)
-//            ChessPosition rookStartPosition = new ChessPosition(row, 8);
-//            ChessPosition rookEndPosition = new ChessPosition(row, 6);
-//            board.removePiece(rookStartPosition);
-//            board.addPiece(rookEndPosition, rook);
-//        } else {
-//            // Move king (queen-side castling)
-//            ChessPosition kingStartPosition = new ChessPosition(row, 5);
-//            ChessPosition kingEndPosition = new ChessPosition(row, 3);
-//            board.removePiece(kingStartPosition);
-//            board.addPiece(kingEndPosition, king);
-//            // Move rook (queen-side castling)
-//            ChessPosition rookStartPosition = new ChessPosition(row, 1);
-//            ChessPosition rookEndPosition = new ChessPosition(row, 4);
-//            board.removePiece(rookStartPosition);
-//            board.addPiece(rookEndPosition, rook);
-//        }
-//
-//        ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
-//        if (isInCheck(teamTurn)) {
-//            // If the move puts the player's king in check, it's an invalid move
-//            // Roll back the move
-//            board.removePiece(move.getEndPosition());
-//            board.addPiece(move.getStartPosition(), king);
-//            if (capturedPiece != null) {
-//                board.addPiece(move.getEndPosition(), capturedPiece);
-//            }
-//
-//            throw new InvalidMoveException("The move puts your king in check.");
-//        }
-//    }
-////    }
-//
-//    private Rook getKingSideRook(ChessMove castlingMove, ChessPiece king) {
-//        int row = castlingMove.getEndPosition().getRow();
-////        int kingCol = castlingMove.getEndPosition().getColumn();
-//
-//        // Determine the king-side rook position based on the king's position
-//        int rookCol;
-//        if (king.getTeamColor() == ChessGame.TeamColor.WHITE) {
-//            rookCol = 8; // King-side rook column for white
-//        } else {
-//            rookCol = 1; // King-side rook column for black
-//        }
-//
-//        // Create a new rook with the same team color
-//        return new Rook(king.getTeamColor(), new ChessPosition(row, rookCol));
-//    }
-//
-//    private Rook getQueenSideRook(ChessMove castlingMove, ChessPiece king) {
-//        int row = castlingMove.getEndPosition().getRow();
-////        int kingCol = castlingMove.getEndPosition().getColumn();
-//
-//        // Determine the queen-side rook position based on the king's position
-//        int rookCol;
-//        if (king.getTeamColor() == ChessGame.TeamColor.WHITE) {
-//            rookCol = 1; // Queen-side rook column for white
-//        } else {
-//            rookCol = 8; // Queen-side rook column for black
-//        }
-//
-//        // Create a new rook with the same team color
-//        return new Rook(king.getTeamColor(), new ChessPosition(row, rookCol));
-//    }
-//
+        int direction = (move.getEndPosition().getColumn() > move.getStartPosition().getColumn()) ? 1 : -1;
+        int row = move.getEndPosition().getRow();
+
+        if (direction == 1) {
+            // Move king (king-side castling)
+            ChessPosition kingStartPosition = new ChessPosition(row, 5);
+            ChessPosition kingEndPosition = new ChessPosition(row, 7);
+            board.removePiece(kingStartPosition);
+            board.addPiece(kingEndPosition, king);
+            // Move rook (king-side castling)
+            ChessPosition rookStartPosition = new ChessPosition(row, 8);
+            ChessPosition rookEndPosition = new ChessPosition(row, 6);
+            board.removePiece(rookStartPosition);
+            board.addPiece(rookEndPosition, rook);
+        } else {
+            // Move king (queen-side castling)
+            ChessPosition kingStartPosition = new ChessPosition(row, 5);
+            ChessPosition kingEndPosition = new ChessPosition(row, 3);
+            board.removePiece(kingStartPosition);
+            board.addPiece(kingEndPosition, king);
+            // Move rook (queen-side castling)
+            ChessPosition rookStartPosition = new ChessPosition(row, 1);
+            ChessPosition rookEndPosition = new ChessPosition(row, 4);
+            board.removePiece(rookStartPosition);
+            board.addPiece(rookEndPosition, rook);
+        }
+
+        ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
+        if (isInCheck(teamTurn)) {
+            // If the move puts the player's king in check, it's an invalid move
+            // Roll back the move
+            board.removePiece(move.getEndPosition());
+            board.addPiece(move.getStartPosition(), king);
+            if (capturedPiece != null) {
+                board.addPiece(move.getEndPosition(), capturedPiece);
+            }
+
+            throw new InvalidMoveException("The move puts your king in check.");
+        }
+    }
+
+    private ChessPiece getRookForCastling(ChessMove move, ChessPiece king, ChessBoard board) {
+        ChessPosition start = move.getStartPosition();
+        ChessPosition end = move.getEndPosition();
+
+        int direction = Integer.compare(end.getColumn(), start.getColumn());
+        int row = start.getRow();
+
+        // Determine the column of the rook based on the direction of the castling
+        int rookColumn = (direction > 0) ? 8 : 1;
+
+        // Check if there's a piece (rook) at the potential rook position
+        ChessPiece rook = board.getPiece(new ChessPosition(row, rookColumn));
+
+        // Validate that the piece at the potential rook position is a rook and belongs to the same team
+        if (rook != null && rook.getPieceType() == ChessPiece.PieceType.ROOK && rook.getTeamColor() == king.getTeamColor()) {
+            return rook;
+        }
+
+        return null; // No valid rook found
+    }
+
     private boolean isEnPassantMove(ChessMove move, ChessPiece piece) {
         if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
             int startRow = move.getStartPosition().getRow();
