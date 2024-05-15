@@ -258,22 +258,22 @@ public class ChessBoard {
         return Objects.hash(Arrays.deepHashCode(board));//, enPassantPosition, hasEnPassantBeenSet);
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = getPiece(position);
-                if (piece != null) {
-                    sb.append(piece.getTeamColor()).append(" ").append(piece.getPieceType()).append(" at ").append(position).append("\n");
-                } else {
-                    sb.append("No piece at ").append(position).append("\n");
-                }
-            }
-        }
-        return sb.toString();
-    }
+//    @Override
+//    public String toString() {
+//        StringBuilder sb = new StringBuilder();
+//        for (int row = 1; row <= 8; row++) {
+//            for (int col = 1; col <= 8; col++) {
+//                ChessPosition position = new ChessPosition(row, col);
+//                ChessPiece piece = getPiece(position);
+//                if (piece != null) {
+//                    sb.append(piece.getTeamColor()).append(" ").append(piece.getPieceType()).append(" at ").append(position).append("\n");
+//                } else {
+//                    sb.append("No piece at ").append(position).append("\n");
+//                }
+//            }
+//        }
+//        return sb.toString();
+//    }
 
     public String toString(ChessPosition position) {
         ChessPiece piece = getPiece(position);

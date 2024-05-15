@@ -73,9 +73,9 @@ public class ChessGame {
         Collection<ChessMove> validMoves = new ArrayList<>(piece.pieceMoves(this.board, startPosition));
 
         // Filter out en passant moves if any piece has moved since en passant position was set
-//        if (anyPieceHasMoved) {
-//            validMoves.removeIf(move -> isEnPassantMove(move, piece));
-//        }
+        if (anyPieceHasMoved) {
+            validMoves.removeIf(move -> isEnPassantMove(move, piece));
+        }
         // Filter out castling moves if king or rook have moved
 //        if (anyPieceHasMoved) {
 //            validMoves.removeIf(move -> {
@@ -174,29 +174,29 @@ public class ChessGame {
             if (piece.getPieceType() == ChessPiece.PieceType.PAWN && (endPosition.getRow() == 4 || endPosition.getRow() == 5)) {
                 piece.setHasMoved(true);
             }
-//
-//            if (piece instanceof King || piece instanceof Rook) {
-//                piece.setHasMoved(true);
-//            }
-//
-//            // Check if any piece has moved (excluding pawns)
-//            if (!(piece instanceof Pawn && Math.abs(startPosition.getRow() - endPosition.getRow()) == 2)) {
-//                anyPieceHasMoved = true;
-//            } else {
-//                anyPieceHasMoved = false;
-//            }
+
+            if (piece.getPieceType() == ChessPiece.PieceType.KING || piece.getPieceType() == ChessPiece.PieceType.ROOK) {
+                piece.setHasMoved(true);
+            }
+
+            // Check if any piece has moved (excluding pawns)
+            if (piece.getPieceType() != ChessPiece.PieceType.PAWN && Math.abs(startPosition.getRow() - endPosition.getRow()) == 2) {
+                anyPieceHasMoved = true;
+            } else {
+                anyPieceHasMoved = false;
+            }
 
 //            // When an opponent's pawn moves two squares forward, set the en passant position.
-//            if (piece instanceof Pawn && Math.abs(startPosition.getRow() - endPosition.getRow()) == 2) {
-//                Position enPassantPosition = new Position((startPosition.getRow() + endPosition.getRow()) / 2, startPosition.getColumn());
-//                board.setEnPassantPosition(enPassantPosition);
-//            }
+            if (piece.getPieceType() == ChessPiece.PieceType.PAWN && Math.abs(startPosition.getRow() - endPosition.getRow()) == 2) {
+                ChessPosition enPassantPosition = new ChessPosition((startPosition.getRow() + endPosition.getRow()) / 2, startPosition.getColumn());
+                board.setEnPassantPosition(enPassantPosition);
+            }
 
 //            // Check if the move is en passant
-//            if (isEnPassantMove(move, piece)) {
-//                // Handle the en passant capture
-//                handleEnPassantCapture(move);
-//            }
+            if (isEnPassantMove(move, piece)) {
+                // Handle the en passant capture
+                handleEnPassantCapture(move);
+            }
 
         //THIS SHOULD BE UPDATED - COPY???****************************************************
         // Check if the move puts the current player's king in check
@@ -543,84 +543,80 @@ public class ChessGame {
 //        return new Rook(king.getTeamColor(), new ChessPosition(row, rookCol));
 //    }
 //
-//    private boolean isEnPassantMove(ChessMove move, ChessPiece piece) {
-//        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-//            int startRow = move.getStartPosition().getRow();
-//            int endRow = move.getEndPosition().getRow();
-//            int startCol = move.getStartPosition().getColumn();
-//            int endCol = move.getEndPosition().getColumn();
-////            Position endPosition = new Position(endRow, endCol);
-//
-//            // Check if the move is one square forward and left or right (en passant)
-//            int direction = (piece.getTeamColor() == TeamColor.WHITE) ? 1 : -1;
-////            board.setEnPassantPosition(endPosition);
-//
-//            // Get the en passant position from your board
-//            ChessPosition enPassantPosition = board.getEnPassantPosition();
-//
-//            if (enPassantPosition != null &&
-//                    endRow - startRow == direction &&
-//                    Math.abs(endCol - startCol) == 1 &&
-//                    move.getEndPosition().equals(enPassantPosition)) {
-//
-//                // Check if there's a pawn in the adjacent column at the same row
-//                ChessPosition adjacentPosition = new ChessPosition(endRow - direction, endCol);
-//                ChessPiece adjacentPawn = board.getPiece(adjacentPosition);
-//
-//                // Check if the adjacent piece is a pawn of the opposing color and it moved two squares in the last turn
-//                if (adjacentPawn instanceof Pawn && adjacentPawn.getTeamColor() != piece.getTeamColor() && adjacentPawn.hasMoved()) {
-//                    return true; // Valid en passant move
-//                }
-//            }
-//        }
-//        return false; // Not an en passant move
-//    }
-//
-//    public boolean isValidEnPassantCapture(ChessMove move) {
-//        ChessPosition enPassantPosition = move.getEndPosition();
-//        ChessPosition capturedPawnPosition;
-//
-//        // Check if the move is a two-square diagonal move by a pawn
-//        if (Math.abs(move.getStartPosition().getColumn() - enPassantPosition.getColumn()) == 1
-//                && Math.abs(move.getStartPosition().getRow() - enPassantPosition.getRow()) == 1) {
-//
-//            // Check destination square
-//            if (board.getPiece(enPassantPosition) != null || board.getPiece(enPassantPosition).getPieceType() == ChessPiece.PieceType.PAWN || board.getPiece(enPassantPosition).getTeamColor() == teamTurn) {
-//                int direction = (teamTurn == TeamColor.WHITE) ? 1 : -1; // Adjust the direction
-//
-//                // Determine the square where the captured pawn should be
-//                capturedPawnPosition = new ChessPosition(enPassantPosition.getRow() - direction, enPassantPosition.getColumn());
-//
-//                ChessPiece capturedPawn = board.getPiece(capturedPawnPosition);
-//
-//                // Check if the piece at the capturedPawnPosition is a pawn and has the 'hasMoved' flag set to true
-//                if (capturedPawn instanceof Pawn && capturedPawn.hasMoved()) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
-//
-//    public void handleEnPassantCapture(ChessMove move) {
-//        // Check if the move is a valid en passant capture
-//        if (isValidEnPassantCapture(move)) {
-//            // Use your concrete implementation of ChessPosition (e.g., ConcretePosition)
-//            ChessPosition enPassantPosition = new ChessPosition(move.getEndPosition().getRow(), move.getEndPosition().getColumn());
-//
-//            int direction = (teamTurn == TeamColor.WHITE) ? 1 : -1; // Adjust the direction
-//
-//            // Identify the square where the captured pawn is located
-//            ChessPosition capturedPawnPosition = new ChessPosition(
-//                    enPassantPosition.getRow() - direction,
-//                    enPassantPosition.getColumn()
-//            );
-//
-//            // Remove the captured pawn from the board
-//            board.removePiece(capturedPawnPosition);
-//            board.setEnPassantPosition(null);
-//        }
-//    }
+    private boolean isEnPassantMove(ChessMove move, ChessPiece piece) {
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+            int startRow = move.getStartPosition().getRow();
+            int endRow = move.getEndPosition().getRow();
+            int startCol = move.getStartPosition().getColumn();
+            int endCol = move.getEndPosition().getColumn();
+//            Position endPosition = new Position(endRow, endCol);
+
+            // Check if the move is one square forward and left or right (en passant)
+            int direction = (piece.getTeamColor() == TeamColor.WHITE) ? 1 : -1;
+//            board.setEnPassantPosition(endPosition);
+
+            // Get the en passant position from your board
+            ChessPosition enPassantPosition = board.getEnPassantPosition();
+
+            if (//enPassantPosition != null &&
+                    endRow - startRow == direction &&
+                    Math.abs(endCol - startCol) == 1 &&
+                    move.getEndPosition().equals(enPassantPosition)) {
+
+                // Check if there's a pawn in the adjacent column at the same row
+                ChessPosition adjacentPosition = new ChessPosition(endRow - direction, endCol);
+                ChessPiece adjacentPawn = board.getPiece(adjacentPosition);
+
+                // Check if the adjacent piece is a pawn of the opposing color and it moved two squares in the last turn
+                return adjacentPawn.getPieceType() == ChessPiece.PieceType.PAWN && adjacentPawn.getTeamColor() != piece.getTeamColor() && adjacentPawn.hasMoved(); // Valid en passant move
+            }
+        }
+        return false; // Not an en passant move
+    }
+
+    public boolean isValidEnPassantCapture(ChessMove move) {
+        ChessPosition enPassantPosition = move.getEndPosition();
+        ChessPosition capturedPawnPosition;
+
+        // Check if the move is a two-square diagonal move by a pawn
+        if (Math.abs(move.getStartPosition().getColumn() - enPassantPosition.getColumn()) == 1
+                && Math.abs(move.getStartPosition().getRow() - enPassantPosition.getRow()) == 1) {
+
+            // Check destination square
+            if (board.getPiece(enPassantPosition) != null || board.getPiece(enPassantPosition).getPieceType() == ChessPiece.PieceType.PAWN || board.getPiece(enPassantPosition).getTeamColor() == teamTurn) {
+                int direction = (teamTurn == TeamColor.WHITE) ? 1 : -1; // Adjust the direction
+
+                // Determine the square where the captured pawn should be
+                capturedPawnPosition = new ChessPosition(enPassantPosition.getRow() - direction, enPassantPosition.getColumn());
+
+                ChessPiece capturedPawn = board.getPiece(capturedPawnPosition);
+
+                // Check if the piece at the capturedPawnPosition is a pawn and has the 'hasMoved' flag set to true
+                return capturedPawn.getPieceType() == ChessPiece.PieceType.PAWN && capturedPawn.hasMoved();
+            }
+        }
+        return false;
+    }
+
+    public void handleEnPassantCapture(ChessMove move) {
+        // Check if the move is a valid en passant capture
+        if (isValidEnPassantCapture(move)) {
+            // Use your concrete implementation of ChessPosition (e.g., ConcretePosition)
+            ChessPosition enPassantPosition = new ChessPosition(move.getEndPosition().getRow(), move.getEndPosition().getColumn());
+
+            int direction = (teamTurn == TeamColor.WHITE) ? 1 : -1; // Adjust the direction
+
+            // Identify the square where the captured pawn is located
+            ChessPosition capturedPawnPosition = new ChessPosition(
+                    enPassantPosition.getRow() - direction,
+                    enPassantPosition.getColumn()
+            );
+
+            // Remove the captured pawn from the board
+            board.removePiece(capturedPawnPosition);
+            board.setEnPassantPosition(null);
+        }
+    }
 
     @Override
     public boolean equals(Object o) {

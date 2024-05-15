@@ -278,11 +278,11 @@ public class ChessPiece {
                 }
             } else {
                 // Check for En Passant capture on the left side
-                ChessPosition enPassantPosition = new ChessPosition(myPosition.getRow() + direction, myPosition.getColumn());
+                ChessPosition enPassantPosition = new ChessPosition(myPosition.getRow() + direction, col);
                 if (board.getEnPassantPosition() != null && enPassantPosition.equals(board.getEnPassantPosition())) {
                     // Check if there's an opponent's pawn in the En Passant target square
                     int enPassantTargetRow = (teamColor == ChessGame.TeamColor.WHITE) ? 5 : 4;
-                    ChessPosition enPassantTarget = new ChessPosition(enPassantTargetRow, myPosition.getColumn());
+                    ChessPosition enPassantTarget = new ChessPosition(enPassantTargetRow, col);
                     ChessPiece enPassantTargetPiece = board.getPiece(enPassantTarget);
                     if (enPassantTargetPiece != null && enPassantTargetPiece.getTeamColor() != teamColor &&
                             enPassantTargetPiece.getPieceType() == PieceType.PAWN && enPassantPosition.equals(board.getEnPassantPosition())) {
