@@ -1,4 +1,4 @@
 package result;
 
-public class ListGamesResult {
+public record ListGamesResult (String status, String message) {
 }

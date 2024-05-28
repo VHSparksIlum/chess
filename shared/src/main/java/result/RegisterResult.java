@@ -1,4 +1,4 @@
 package result;
 
-public class RegisterResult {
+public record RegisterResult (String status, String message) {
 }
