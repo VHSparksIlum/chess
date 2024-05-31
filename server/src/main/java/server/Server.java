@@ -12,7 +12,7 @@ import spark.*;
 
 public class Server {
     private final ClearService clearService;
-    //    private final GameService gameService;
+    private final GameService gameService;
     private final UserService userService;
 
     public Server(){
@@ -20,12 +20,12 @@ public class Server {
         GameDAO gameDAO = new MemoryGameDAO();
         UserDAO userDAO = new MemoryUserDAO();
         clearService = new ClearService(authDAO, gameDAO, userDAO);
-//        gameService = new GameService(authDAO, gameDAO);
+        gameService = new GameService(authDAO, gameDAO);
         userService = new UserService(authDAO, userDAO);
     }
     public Server(AuthDAO authDAO, GameDAO gameDAO, UserDAO userDAO) {
         clearService = new ClearService(authDAO, gameDAO, userDAO);
-//        gameService = new GameService(authDAO, gameDAO);
+        gameService = new GameService(authDAO, gameDAO);
         userService = new UserService(authDAO, userDAO);
     }
 
@@ -97,5 +97,80 @@ public class Server {
         res.type("application/json");
         Gson gson = new Gson();
         return gson.toJson(response);
+    }
+
+//    private Object register(Request req, Response res) {
+//        try {
+//            var user = new Gson().fromJson(req.body(), User.class);
+//            var auth = userService.registerUser(user);
+//            return new Gson().toJson(auth);
+//        }catch(DataAccessException dae){
+//            return dataAccessException(res, dae);
+//        }
+//    }
+//
+//    private Object login(Request req, Response res) {
+//        try {
+//            var user = new Gson().fromJson(req.body(), User.class);
+//            var auth = userService.login(user);
+//            return new Gson().toJson(auth);
+//        }catch(DataAccessException dae){
+//            return dataAccessException(res, dae);
+//        }
+//    }
+//
+//    private Object logout(Request req, Response res) {
+//        try{
+//            userService.logout(req.headers("authorization"));
+//            return "{}";
+//        }catch(DataAccessException dae){
+//            return dataAccessException(res, dae);
+//        }
+//    }
+//    private Object list(Request req, Response res){
+//        try{
+//            var listGames = gameService.listGames(req.headers("authorization"));
+//            return new Gson().toJson(new Games(listGames));
+//        }catch(DataAccessException dae){
+//            return dataAccessException(res, dae);
+//        }
+//    }
+//    private Object create(Request req, Response res) {
+//        try{
+//            var game = new Gson().fromJson(req.body(), Game.class);
+//            game = gameService.createGame(req.headers("authorization"),game);
+//            return new Gson().toJson(game);
+//        }catch(DataAccessException dae){
+//            return dataAccessException(res, dae);
+//        }
+//    }
+//    private Object join(Request req, Response res) {
+//        try{
+//            var joinGame = new Gson().fromJson(req.body(), Join.class);
+//            gameService.joinGame(req.headers("authorization"),joinGame);
+//            return "{}";
+//        }catch(DataAccessException dae){
+//            return dataAccessException(res, dae);
+//        }
+//    }
+    private String errorCall(Response res, DataAccessException dae){
+        switch (dae.getMessage()) {
+            case "Bad Request!" -> {
+                res.status(400);
+                return "{ \"message\": \"Error: Bad Request\" }";
+            }
+            case "Unauthorized!" -> {
+                res.status(401);
+                return "{ \"message\": \"Error: Unauthorized\" }";
+            }
+            case "Already Taken!" -> {
+                res.status(403);
+                return "{ \"message\": \"Error: Forbidden\" }";
+            }
+            default -> {
+                res.status(500);
+                return "{ \"message\": \"Error: description\" }";
+            }
+        }
     }
 }

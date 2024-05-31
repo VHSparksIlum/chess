@@ -11,7 +11,8 @@ public interface GameDAO {
 
     GameData createGame(GameData game);
 
-    GameData joinGame(GameData game);
+    //may need to be passed new instance rather than GameData game
+    GameData updateGame(String username, Integer gameID, String playerColor, GameData game);
 
     void clear();
 }
