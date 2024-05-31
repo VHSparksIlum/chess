@@ -3,37 +3,52 @@ package dataaccess.memory;
 import dataaccess.UserDAO;
 import model.UserData;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
 
 public class MemoryUserDAO implements UserDAO {
-    final private HashMap<String, UserData> users = new HashMap<>();
+    private static final HashSet<UserData> users = new HashSet<>();
 
     @Override
     public UserData getUser(String username) {
-        return users.get(username);
+        for (UserData user : users) {
+            if (Objects.equals(user.username(), username)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public boolean foundUser(String username) {
+        for (UserData user : users) {
+            if (Objects.equals(user.username(), username)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
-    public void createUser(UserData user) {}
+    public void createUser(UserData user) {
+        users.add(user);
+    }
 
     @Override
     public void clear() {
         users.clear();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MemoryUserDAO that = (MemoryUserDAO) o;
-        return Objects.equals(users, that.users);
-    }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(users);
+        return super.hashCode();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
 }
 
 /**

@@ -1,6 +1,8 @@
 package server;
 
 import com.google.gson.Gson;
+import model.AuthData;
+import model.UserData;
 import request.*;
 import result.*;
 import dataaccess.*;
@@ -58,16 +60,43 @@ public class Server {
     }
 
     private Object register(Request req, Response res) {
-        RegisterResult response = new RegisterResult("success", "User registered successfully.");
-        res.type("application/json");
         Gson gson = new Gson();
+        RegisterRequest request = (RegisterRequest)gson.fromJson(req.body(), RegisterRequest.class);
+        UserData user = new UserData(request.username(), request.password(), request.email());
+        AuthData authorization = null;
+        RegisterResult response;
+        try {
+            authorization = UserService.register(user);
+            response = new RegisterResult(authorization.username(), authorization.authToken(), "");
+            res.status(200);
+        } catch (DataAccessException e) {
+            response = new RegisterResult("", "", "Error: already taken");
+            res.status(403);
+        } catch (IllegalArgumentException e) {
+            response = new RegisterResult("", "", "Error: bad request");
+            res.status(400);
+        }
+        res.type("application/json");
         return gson.toJson(response);
     }
 
     private Object login(Request req, Response res) {
-        LoginResult response = new LoginResult("success", "User logged in successfully.");
-        res.type("application/json");
         Gson gson = new Gson();
+        LoginRequest request = (LoginRequest)gson.fromJson(req.body(), LoginRequest.class);
+        System.out.println(request.username() + ", " + request.password());
+        UserData user = new UserData(request.username(), request.password(), "");
+        AuthData authorization = null;
+        LoginResult response;
+        try {
+            authorization = UserService.login(user);
+            response = new LoginResult(authorization.username(), authorization.authToken(), "");
+            res.status(200);
+        } catch (DataAccessException e) {
+            System.out.println("anything but error");
+            response = new LoginResult("", "", "Unauthorized");
+            res.status(401);
+        }
+        res.type("application/json");
         return gson.toJson(response);
     }
 
