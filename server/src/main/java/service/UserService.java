@@ -23,7 +23,7 @@ public class UserService {
 
     public static AuthData register(UserData user) throws DataAccessException {
         if(user.username()==null || user.password()==null || user.email()==null){
-            throw new DataAccessException("Missing required fields");
+            throw new IllegalArgumentException("Missing required fields");
         }
         String username = user.username();
         if(userDAO.getUser(username)==null && !userDAO.foundUser(username)){
@@ -43,7 +43,6 @@ public class UserService {
         if((getUser!=null) && (getUser.password().equals(password))) {
             return createNewAuth(username);
         } else {
-            System.out.println("login UserService");
             throw new DataAccessException("Unauthorized");
         }
     }

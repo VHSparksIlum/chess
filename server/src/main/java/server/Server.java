@@ -70,10 +70,10 @@ public class Server {
             response = new RegisterResult(authorization.username(), authorization.authToken(), "");
             res.status(200);
         } catch (DataAccessException e) {
-            response = new RegisterResult("", "", "Error: already taken");
+            response = new RegisterResult(null, null, "Error: already taken");
             res.status(403);
         } catch (IllegalArgumentException e) {
-            response = new RegisterResult("", "", "Error: bad request");
+            response = new RegisterResult(null, null, "Error: bad request");
             res.status(400);
         }
         res.type("application/json");
@@ -92,8 +92,7 @@ public class Server {
             response = new LoginResult(authorization.username(), authorization.authToken(), "");
             res.status(200);
         } catch (DataAccessException e) {
-            System.out.println("anything but error");
-            response = new LoginResult("", "", "Unauthorized");
+            response = new LoginResult(null, null, "Error: unauthorized");
             res.status(401);
         }
         res.type("application/json");
