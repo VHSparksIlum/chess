@@ -100,9 +100,19 @@ public class Server {
     }
 
     private Object logout(Request req, Response res) {
-        LogoutResult response = new LogoutResult("success", "User logged out successfully.");
-        res.type("application/json");
         Gson gson = new Gson();
+        String authToken = req.headers("authorization");
+        LogoutRequest request = new LogoutRequest(authToken, null);
+        LogoutResult response;
+        try {
+            UserService.logout(request.authToken());
+            response = new LogoutResult("{}");
+            res.status(200);
+        } catch (DataAccessException e) {
+            response = new LogoutResult("Error: unauthorized");
+            res.status(401);
+        }
+        res.type("application/json");
         return gson.toJson(response);
     }
 

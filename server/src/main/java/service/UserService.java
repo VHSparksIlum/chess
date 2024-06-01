@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.*;
+import dataaccess.memory.MemoryAuthDAO;
 import dataaccess.memory.MemoryUserDAO;
 import model.AuthData;
 import model.UserData;
@@ -19,6 +20,7 @@ public class UserService {
 
     static {
         userDAO = new MemoryUserDAO();
+        authDAO = new MemoryAuthDAO();
     }
 
     public static AuthData register(UserData user) throws DataAccessException {
@@ -47,11 +49,7 @@ public class UserService {
         }
     }
 
-//    public static UserData verifyPassword(UserData user) throws DataAccessException {
-//
-//    }
-
-    public void logout(String authToken) throws DataAccessException {
+    public static void logout(String authToken) throws DataAccessException {
         if(authDAO.getAuth(authToken)!=null){
             authDAO.deleteAuth(authToken);
         } else{

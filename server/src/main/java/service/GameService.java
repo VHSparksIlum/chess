@@ -28,7 +28,7 @@ public class GameService {
                 if(((Objects.equals(playerColor, "WHITE") && (Objects.equals(foundGame.getWhiteUsername(), "") || foundGame.getWhiteUsername() == null))) ||
                         ((Objects.equals(playerColor, "BLACK") && (Objects.equals(foundGame.getBlackUsername(), "") || foundGame.getBlackUsername() == null))) ||
                         ((!Objects.equals(playerColor, "WHITE") && !Objects.equals(playerColor, "BLACK")))) {
-                    gameDAO.updateGame(auth.getUsername(), foundGame.getGameID(), playerColor, foundGame);
+                    gameDAO.updateGame(auth.username(), foundGame.getGameID(), playerColor, foundGame);
                 } else {
                     throw new DataAccessException("team taken");
                 }

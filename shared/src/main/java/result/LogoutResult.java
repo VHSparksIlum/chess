@@ -1,4 +1,8 @@
 package result;
 
-public record LogoutResult (String status, String message) {
+public class LogoutResult extends ErrorResponse {
+
+    public LogoutResult(String message) {
+        super(message);
+    }
 }
