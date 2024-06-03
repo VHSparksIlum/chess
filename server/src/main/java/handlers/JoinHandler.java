@@ -1,5 +1,6 @@
 package handlers;
 
+import model.AuthData;
 import request.JoinGameRequest;
 import result.JoinGameResult;
 import dataaccess.*;
@@ -26,12 +27,10 @@ public class JoinHandler {
 
             gameService.joinGame(authToken, playerColor, gameID);
 
-            // Successful join, return an empty JSON object
             res.type("application/json");
             res.status(200);
             return "{}";
         } catch (DataAccessException dae) {
-            // Error occurred, handle and return appropriate response
             return turnToJson(res, dae);
         }
     }

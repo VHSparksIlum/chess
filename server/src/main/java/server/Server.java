@@ -144,7 +144,7 @@ public class Server {
         CreateGameResult response;
         try {
             var game = new Gson().fromJson(req.body(), GameData.class);
-            game = gameService.createGame(req.headers("authorization"),game);
+            game = gameService.createGame(authToken, game);
             response = new CreateGameResult("{}", game.gameID());
             res.status(200);
         } catch (DataAccessException e) {
