@@ -8,16 +8,25 @@ import java.util.Objects;
 
 
 public class GameService {
-    private final AuthDAO authDAO;
-    private final GameDAO gameDAO;
+    private static AuthDAO authDAO;
+    private static GameDAO gameDAO;
     public GameService(AuthDAO authDAO, GameDAO gameDAO) {
-        this.authDAO = authDAO;
-        this.gameDAO = gameDAO;
+        GameService.authDAO = authDAO;
+        GameService.gameDAO = gameDAO;
     }
 
     public GameData createGame(String authToken, GameData game) throws DataAccessException {
-        checkAuthToken(authToken);
+        if (!checkAuthToken(authToken)) {
+            throw new DataAccessException("Unauthorized");
+        }
+        if (Objects.equals(game.gameName(), "")) {
+            throw new DataAccessException("Bad Request");
+        }
         return gameDAO.createGame(game);
+//        if(!checkAuthToken(authToken)) {
+//            throw new DataAccessException("Unauthorized");
+//        }
+//        return gameDAO.createGame(gameName);
     }
 
     public void joinGame(String authToken, String playerColor, Integer gameID) throws DataAccessException {
@@ -40,14 +49,17 @@ public class GameService {
         }
     }
 
-    public List<GameData> listGames(String authToken) throws DataAccessException {
-        checkAuthToken(authToken);
+    public static List<GameData> listGames(String authToken) throws DataAccessException {
+        if(!checkAuthToken(authToken)) {
+            throw new DataAccessException("Unauthorized");
+        }
         return gameDAO.listGames();
     }
 
-    private void checkAuthToken(String authToken) throws DataAccessException {
+    private static boolean checkAuthToken(String authToken) throws DataAccessException {
         if(authDAO.getAuth(authToken)==null){
             throw new DataAccessException("unauthorized");
         }
+        return true;
     }
 }

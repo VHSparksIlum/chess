@@ -15,6 +15,19 @@ public class MemoryGameDAO implements GameDAO {
 
     @Override
     public List<GameData> listGames() {
+//        StringBuilder result = new StringBuilder("[");
+//        boolean first = true;
+//        for (GameData gameData : games.values()) {
+//            if (!first) {
+//                result.append(", ");
+//            } else {
+//                first = false;
+//            }
+//            result.append(gameData.toString());
+//        }
+//        result.append("]");
+//        return result.toString();
+
         List<GameData> listGames = new ArrayList<>();
         for (int i = 1; i <= gameID; i++) {
             listGames.add(games.get(i));
@@ -30,8 +43,8 @@ public class MemoryGameDAO implements GameDAO {
     @Override
     public GameData createGame(GameData game) {
         gameID++;
-        GameData createGame = new GameData(gameID,game.getWhiteUsername(), game.getBlackUsername(), game.getGameName(), game.getGame());
-        games.put(gameID,createGame);
+        GameData createGame = new GameData(gameID, game.getWhiteUsername(), game.getBlackUsername(), game.getGameName(), game.getGame());
+        games.put(gameID, createGame);
         return createGame;
     }
 

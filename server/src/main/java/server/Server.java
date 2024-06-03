@@ -2,6 +2,7 @@ package server;
 
 import com.google.gson.Gson;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 import request.*;
 import result.*;
@@ -11,6 +12,8 @@ import dataaccess.memory.MemoryGameDAO;
 import dataaccess.memory.MemoryUserDAO;
 import service.*;
 import spark.*;
+
+import java.util.Collection;
 
 public class Server {
     private final ClearService clearService;
@@ -117,16 +120,38 @@ public class Server {
     }
 
     private Object list(Request req, Response res) {
-        ListGamesResult response = new ListGamesResult("success", "Listed games successfully.");
-        res.type("application/json");
         Gson gson = new Gson();
+        String authToken = req.headers("authorization");
+        ListGamesRequest request = new ListGamesRequest();
+        ListGamesResult response;
+        try {
+            Collection<GameData> games = GameService.listGames(authToken);
+            GameService.listGames(authToken);
+            response = new ListGamesResult("", games);
+            res.status(200);
+        } catch (DataAccessException e) {
+            response = new ListGamesResult("Error: unauthorized", null);
+            res.status(401);
+        }
+        res.type("application/json");
         return gson.toJson(response);
     }
 
     private Object create(Request req, Response res) {
-        CreateGameResult response = new CreateGameResult("success", "Game created successfully.");
-        res.type("application/json");
         Gson gson = new Gson();
+        String authToken = req.headers("authorization");
+        //CreateGameRequest request = new CreateGameRequest(authToken, );
+        CreateGameResult response;
+        try {
+            var game = new Gson().fromJson(req.body(), GameData.class);
+            game = gameService.createGame(req.headers("authorization"),game);
+            response = new CreateGameResult("{}", game.gameID());
+            res.status(200);
+        } catch (DataAccessException e) {
+            response = new CreateGameResult("Error: unauthorized", null);
+            res.status(401);
+        }
+        res.type("application/json");
         return gson.toJson(response);
     }
 
