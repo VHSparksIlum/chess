@@ -23,10 +23,6 @@ public class GameService {
             throw new DataAccessException("Bad Request");
         }
         return gameDAO.createGame(game);
-//        if(!checkAuthToken(authToken)) {
-//            throw new DataAccessException("Unauthorized");
-//        }
-//        return gameDAO.createGame(gameName);
     }
 
     public void joinGame(String authToken, String playerColor, Integer gameID) throws DataAccessException {
@@ -59,23 +55,6 @@ public class GameService {
                 throw new IllegalAccessError("Already taken");
             }
             gameDAO.joinGame(gameID, playerColor, auth);
-//        AuthData auth = authDAO.getAuth(authToken);
-//        if(auth != null) {
-//            GameData foundGame = gameDAO.getGame(gameID);
-//            if(foundGame != null) {
-//                if(((Objects.equals(playerColor, "WHITE") && (Objects.equals(foundGame.getWhiteUsername(), "") || foundGame.getWhiteUsername() == null))) ||
-//                        ((Objects.equals(playerColor, "BLACK") && (Objects.equals(foundGame.getBlackUsername(), "") || foundGame.getBlackUsername() == null))) ||
-//                        ((!Objects.equals(playerColor, "WHITE") && !Objects.equals(playerColor, "BLACK")))) {
-//                    gameDAO.updateGame(auth.username(), foundGame.getGameID(), playerColor, foundGame);
-//                } else {
-//                    throw new DataAccessException("team taken");
-//                }
-//            } else {
-//                throw new DataAccessException("bad request");
-//            }
-//        } else {
-//            throw new DataAccessException("unauthorized");
-//        }
     }
 
     public static List<GameData> listGames(String authToken) throws DataAccessException {

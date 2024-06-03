@@ -20,16 +20,4 @@ public class ClearService {
         gameDAO.clear();
         userDAO.clear();
     }
-
-//    try {
-//        game.ClearGames();
-//        user.clearUsers();
-//        auth.clearAuth();
-//        return new ClearResult();
-//    }
-//        catch (DataAccessException e) {
-//        var response = new ClearResult();
-//        response.setMessage(String.format("Error: %s", e.getMessage()));
-//        return response;
-//    }
 }
