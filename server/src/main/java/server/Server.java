@@ -156,9 +156,26 @@ public class Server {
     }
 
     private Object join(Request req, Response res) {
-        JoinGameResult response = new JoinGameResult("success", "Joined game successfully.");
-        res.type("application/json");
         Gson gson = new Gson();
+        String authToken = req.headers("authorization");
+//        JoinGameRequest request = new JoinGameRequest(authToken, );
+        var request = new Gson().fromJson(req.body(), JoinGameRequest.class);
+        JoinGameResult response;
+        try {
+            gameService.joinGame(authToken, request.playerColor(), request.gameID());
+            response = new JoinGameResult("{}");
+            res.status(200);
+        } catch (IllegalArgumentException e) {
+            response = new JoinGameResult("Error: bad request");
+            res.status(400);
+        } catch (DataAccessException e) {
+            response = new JoinGameResult("Error: unauthorized");
+            res.status(401);
+        } catch (IllegalAccessError e) {
+            response = new JoinGameResult("Error: already taken");
+            res.status(403);
+        }
+        res.type("application/json");
         return gson.toJson(response);
     }
 

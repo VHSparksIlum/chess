@@ -2,6 +2,7 @@ package dataaccess.memory;
 
 import chess.ChessGame;
 import dataaccess.GameDAO;
+import model.AuthData;
 import model.GameData;
 
 import java.util.ArrayList;
@@ -15,24 +16,12 @@ public class MemoryGameDAO implements GameDAO {
 
     @Override
     public List<GameData> listGames() {
-//        StringBuilder result = new StringBuilder("[");
-//        boolean first = true;
-//        for (GameData gameData : games.values()) {
-//            if (!first) {
-//                result.append(", ");
-//            } else {
-//                first = false;
-//            }
-//            result.append(gameData.toString());
+        return new ArrayList<>(games.values());
+//        List<GameData> listGames = new ArrayList<>();
+//        for (int i = 1; i <= gameID; i++) {
+//            listGames.add(games.get(i));
 //        }
-//        result.append("]");
-//        return result.toString();
-
-        List<GameData> listGames = new ArrayList<>();
-        for (int i = 1; i <= gameID; i++) {
-            listGames.add(games.get(i));
-        }
-        return listGames;
+//        return listGames;
     }
 
     @Override
@@ -43,25 +32,44 @@ public class MemoryGameDAO implements GameDAO {
     @Override
     public GameData createGame(GameData game) {
         gameID++;
-        GameData createGame = new GameData(gameID, game.getWhiteUsername(), game.getBlackUsername(), game.getGameName(), game.getGame());
+        GameData createGame = new GameData(gameID, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
         games.put(gameID, createGame);
         return createGame;
     }
 
     @Override
-    public GameData updateGame(String username, Integer gameID, String playerColor, GameData game) {
-        GameData newGame = games.get(gameID);
-        if(playerColor == null){
-            newGame = new GameData(gameID,newGame.getWhiteUsername(),newGame.getBlackUsername(),newGame.getGameName(),game.getGame());
-        }else {
-            switch (playerColor) {
-                case "WHITE" -> newGame = new GameData(gameID, username, newGame.getBlackUsername(), newGame.getGameName(), game.getGame());
-                case "BLACK" -> newGame = new GameData(gameID, newGame.getWhiteUsername(), username, newGame.getGameName(), game.getGame());
-            }
+    public void joinGame(int gameID, String playerColor, AuthData auth) {
+        String username = auth.username();
+        GameData game = getGame(gameID);
+
+        GameData updatedGame = getGameData(playerColor, game, username);
+
+        games.put(gameID, updatedGame);
+//        GameData newGame = games.get(gameID);
+//        if(playerColor == null){
+//            newGame = new GameData(gameID,newGame.getWhiteUsername(),newGame.getBlackUsername(),newGame.getGameName(),game.getGame());
+//        }else {
+//            switch (playerColor) {
+//                case "WHITE" -> newGame = new GameData(gameID, auth.username(), newGame.getBlackUsername(), newGame.getGameName(), game.getGame());
+//                case "BLACK" -> newGame = new GameData(gameID, newGame.getWhiteUsername(), auth.username(), newGame.getGameName(), game.getGame());
+//            }
+//        }
+//        games.remove(gameID);
+//        games.put(gameID,newGame);
+//        return newGame;
+    }
+
+    private static GameData getGameData(String playerColor, GameData game, String username) {
+        GameData updatedGame;
+        if (Objects.equals(playerColor, "WHITE")) {
+            updatedGame = new GameData(game.gameID(), username, game.blackUsername(), game.gameName(), game.game());
+        } else if (Objects.equals(playerColor, "BLACK")) {
+            updatedGame = new GameData(game.gameID(), game.whiteUsername(), username, game.gameName(), game.game());
+        } else {
+            // Handle invalid playerColor
+            throw new IllegalArgumentException("Invalid player color: " + playerColor);
         }
-        games.remove(gameID);
-        games.put(gameID,newGame);
-        return newGame;
+        return updatedGame;
     }
 
     @Override

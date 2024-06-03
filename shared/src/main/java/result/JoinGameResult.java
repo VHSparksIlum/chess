@@ -1,7 +1,8 @@
 package result;
 
-public record JoinGameResult (String status, String message) {
-    public String getMessage() {
-        return message;
+public class JoinGameResult extends ErrorResponse {
+
+    public JoinGameResult(String message) {
+        super(message);
     }
 }
