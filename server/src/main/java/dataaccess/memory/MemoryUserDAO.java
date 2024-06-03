@@ -7,11 +7,11 @@ import java.util.HashSet;
 import java.util.Objects;
 
 public class MemoryUserDAO implements UserDAO {
-    private static final HashSet<UserData> users = new HashSet<>();
+    private static final HashSet<UserData> USERS = new HashSet<>();
 
     @Override
     public UserData getUser(String username) {
-        for (UserData user : users) {
+        for (UserData user : USERS) {
             if (Objects.equals(user.username(), username)) {
                 return user;
             }
@@ -20,7 +20,7 @@ public class MemoryUserDAO implements UserDAO {
     }
 
     public boolean foundUser(String username) {
-        for (UserData user : users) {
+        for (UserData user : USERS) {
             if (Objects.equals(user.username(), username)) {
                 return true;
             }
@@ -30,12 +30,12 @@ public class MemoryUserDAO implements UserDAO {
 
     @Override
     public void createUser(UserData user) {
-        users.add(user);
+        USERS.add(user);
     }
 
     @Override
     public void clear() {
-        users.clear();
+        USERS.clear();
     }
 
 
