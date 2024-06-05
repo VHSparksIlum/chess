@@ -16,10 +16,11 @@ import spark.*;
 import java.util.Collection;
 
 public class Server {
-    private final ClearService clearService;
-    private final GameService gameService;
-    private final UserService userService;
+    private ClearService clearService;
+    private GameService gameService;
+    private UserService userService;
 
+    //Constructor for StandardAPITests
     public Server(){
         AuthDAO authDAO = new MemoryAuthDAO();
         GameDAO gameDAO = new MemoryGameDAO();
@@ -28,10 +29,17 @@ public class Server {
         gameService = new GameService(authDAO, gameDAO);
         userService = new UserService(authDAO, userDAO);
     }
+
+    //Constructor for Memory Server
     public Server(AuthDAO authDAO, GameDAO gameDAO, UserDAO userDAO) {
         clearService = new ClearService(authDAO, gameDAO, userDAO);
         gameService = new GameService(authDAO, gameDAO);
         userService = new UserService(authDAO, userDAO);
+    }
+
+    //Constructor for SQL Server
+    public Server(SqlDataAccess sqlDataAccess) throws DataAccessException {
+        SqlDataAccess sql = new SqlDataAccess();
     }
 
     public int run(int desiredPort) {
@@ -64,9 +72,9 @@ public class Server {
 
     private Object register(Request req, Response res) {
         Gson gson = new Gson();
-        RegisterRequest request = (RegisterRequest)gson.fromJson(req.body(), RegisterRequest.class);
+        RegisterRequest request = gson.fromJson(req.body(), RegisterRequest.class);
         UserData user = new UserData(request.username(), request.password(), request.email());
-        AuthData authorization = null;
+        AuthData authorization;
         RegisterResult response;
         try {
             authorization = UserService.register(user);
@@ -85,10 +93,10 @@ public class Server {
 
     private Object login(Request req, Response res) {
         Gson gson = new Gson();
-        LoginRequest request = (LoginRequest)gson.fromJson(req.body(), LoginRequest.class);
+        LoginRequest request = gson.fromJson(req.body(), LoginRequest.class);
         System.out.println(request.username() + ", " + request.password());
         UserData user = new UserData(request.username(), request.password(), "");
-        AuthData authorization = null;
+        AuthData authorization;
         LoginResult response;
         try {
             authorization = UserService.login(user);
@@ -122,7 +130,7 @@ public class Server {
     private Object list(Request req, Response res) {
         Gson gson = new Gson();
         String authToken = req.headers("authorization");
-        ListGamesRequest request = new ListGamesRequest();
+        //ListGamesRequest request = new ListGamesRequest();
         ListGamesResult response;
         try {
             Collection<GameData> games = GameService.listGames(authToken);
