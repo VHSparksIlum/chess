@@ -10,7 +10,7 @@ public interface GameDAO {
 
     GameData getGame(int gameID);
 
-    GameData createGame(GameData game);
+    Object createGame(GameData game);
 
     //may need to be passed new instance rather than GameData game
     void joinGame(int gameID, String playerColor, AuthData auth);
