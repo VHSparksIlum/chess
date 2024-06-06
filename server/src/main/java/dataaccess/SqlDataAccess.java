@@ -285,7 +285,6 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
             }
 
             String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
-            //storeUserPassword(user.username(), hashedPassword);
 
             String statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
             executeUpdate(statement, user.username(), hashedPassword, user.email());
