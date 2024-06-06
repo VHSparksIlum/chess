@@ -1,11 +1,9 @@
 package service;
 
 import dataaccess.*;
-import org.mindrot.jbcrypt.BCrypt;
 import model.AuthData;
 import model.UserData;
 
-import java.util.Objects;
 import java.util.UUID;
 
 public class UserService {
@@ -45,9 +43,7 @@ public class UserService {
 
         UserData getUser = userDAO.getUser(username);
 
-        if((getUser!=null) && (getUser.password().equals(password))) {
-            String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-            writeHashedPasswordToDatabase(username, hashedPassword);
+        if((getUser!=null) && SqlDataAccess.verifyUser(username, password)) {
                 return createNewAuth(username);
         } else {
             throw new DataAccessException("Unauthorized");
@@ -60,21 +56,6 @@ public class UserService {
         } else{
             throw new DataAccessException("Unauthorized");
         }
-    }
-
-    private static void writeHashedPasswordToDatabase(String username, String hashedPassword) {
-
-    }
-
-    private static void readHashedPasswordFromDatabase(String username){
-        
-    }
-
-    boolean verifyUser(String username, String providedClearTextPassword) {
-//        var hashedPassword = readHashedPasswordFromDatabase(username);
-//
-//        return BCrypt.checkpw(providedClearTextPassword, hashedPassword);
-        return true;
     }
 
     private static AuthData createNewAuth(String username) {

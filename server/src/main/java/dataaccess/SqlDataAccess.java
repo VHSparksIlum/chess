@@ -7,6 +7,9 @@ import model.GameData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -275,7 +278,12 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
     public void createUser(UserData user) {
         var statement = "INSERT INTO users (username, password, email, json) VALUES (?, ?, ?, ?)";
         try {
+            if (foundUser(user.username())) {
+                throw new DataAccessException("User already exists");
+            }
             String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+            storeUserPassword(user.username(), hashedPassword);
+
             executeUpdate(statement, user.username(), hashedPassword, user.email(), new Gson().toJson(user));
         } catch (DataAccessException e) {
             System.out.println("createUser");
@@ -315,6 +323,44 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
         } catch (DataAccessException e) {
             System.out.println(e.getMessage());
         }
+    }
 
+    public void storeUserPassword(String username, String password) {
+        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO users (username, password) VALUES (?, ?)")) {
+            statement.setString(1, username);
+            statement.setString(2, hashedPassword);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("storePassword");
+            System.out.println(e.getMessage());
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String readHashedPasswordFromDatabase(String username) {
+        String hashedPassword = null;
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT password FROM users WHERE username = ?")) {
+            statement.setString(1, username);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    hashedPassword = resultSet.getString("password");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("readPassword");
+            System.out.println(e.getMessage());
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+        return hashedPassword;
+    }
+
+    public static boolean verifyUser(String username, String providedClearTextPassword) {
+        String hashedPassword = readHashedPasswordFromDatabase(username);
+        return BCrypt.checkpw(providedClearTextPassword, hashedPassword);
     }
 }
