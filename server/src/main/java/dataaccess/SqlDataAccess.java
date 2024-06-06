@@ -5,19 +5,15 @@ import com.google.gson.Gson;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-import static java.awt.SystemColor.info;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.sql.Types.NULL;
 
 public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
-    private final HashMap<String, AuthData> auths = new HashMap<>();
-    private final HashMap<Integer, GameData> games = new HashMap<>();
-    private static final HashSet<UserData> USERS = new HashSet<>();
 
     public SqlDataAccess() throws DataAccessException {
         configureDatabase();
@@ -67,10 +63,10 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
     private final String[] createStatements = {
            """
            CREATE TABLE IF NOT EXISTS  auth (
-              `auth` varchar(512) NOT NULL,
+              `authToken` varchar(512) NOT NULL,
               `username` varchar(256) NOT NULL,
-              PRIMARY KEY (`auth`),
-              INDEX(auth)
+              PRIMARY KEY (`authToken`),
+              INDEX(authToken)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
            """,
             """
@@ -99,10 +95,10 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
 
     @Override
     public AuthData createAuth(String authToken, String username) {
-        var statement = "INSERT INTO auth (auth, username) VALUES (?, ?)";
+        var statement = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
         try {
             AuthData auth = new AuthData(authToken, username);
-            executeUpdate(statement, auth.toString(), username);
+            executeUpdate(statement, authToken, username);
             return auth;
         } catch (DataAccessException e) {
             System.out.println(e.getMessage());
@@ -113,12 +109,13 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
     @Override
     public AuthData getAuth(String authToken) {
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT * FROM auth WHERE auth=?";
+            var statement = "SELECT * FROM auth WHERE authToken=?";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, authToken);
                 try (var rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return auths.get(authToken);
+                        String username = rs.getString("username");
+                        return new AuthData(authToken, username);
                     }
                 }
             }
@@ -131,9 +128,9 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
 
     @Override
     public void deleteAuth(String authToken) {
-        var statement = "DELETE FROM auth WHERE auth=?";
+        var statement = "DELETE FROM auth WHERE authToken=?";
         try {
-            executeUpdate(statement, info.toString());
+            executeUpdate(statement, authToken);
         } catch (DataAccessException e) {
             System.out.println(e.getMessage());
         }
@@ -167,7 +164,8 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
                 ps.setInt(1, gameID);
                 try (var rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return readGame(rs);
+                        var json = rs.getString("json");
+                        return new Gson().fromJson(json, GameData.class);
                     }
                 }
             }
@@ -179,19 +177,15 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
     }
 
     @Override
-    public Object createGame(GameData game) {
-        var statement = "INSERT INTO games (name) VALUES (?)";
+    public GameData createGame(GameData game) {
+        var statement = "INSERT INTO games (name, game, json) VALUES (?, ?, ?)";
         try {
-            int id = executeUpdate(statement, game.gameName());
-            var statement2 = "UPDATE games SET game = ?, json = ? WHERE id = ?";
-            GameData createGame = new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
-            games.put(game.gameID(), createGame);
-            executeUpdate(statement2, new Gson().toJson(game.game()), new Gson().toJson(game), id);
-            return id;
+            int id = executeUpdate(statement, game.gameName(), new Gson().toJson(game.game()), new Gson().toJson(game));
+            return new GameData(id, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
         } catch (DataAccessException e) {
             System.out.println(e.getMessage());
         }
-        return 0;
+        return null;
     }
 
 
@@ -199,25 +193,26 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
     public void joinGame(int gameID, String playerColor, AuthData auth) {
         try {
             GameData game = getGame(gameID);
+            GameData updatedGame = null;
             String username = getUsername(auth);
             System.out.println("Updating");
-            var statement = "SELECT username FROM auth WHERE auth=?";
+            var statement = "SELECT username FROM auth WHERE authToken=?";
             System.out.println("here");
             System.out.println(username);
             var statement2 = "";
             if (Objects.equals(playerColor, "WHITE"))
             {
-                //game.whiteUsername(username);
+                updatedGame = new GameData(game.gameID(), username, game.blackUsername(), game.gameName(), game.game());
                 statement2 = "UPDATE games SET whiteUsername = ?, json = ? WHERE id = ?";
             }
             else if (Objects.equals(playerColor, "BLACK"))
             {
-                //game.blackUsername(username);
+                updatedGame = new GameData(game.gameID(), game.whiteUsername(), username, game.gameName(), game.game());
                 statement2 = "UPDATE games SET blackUsername = ?, json = ? WHERE id = ?";
             }
             try
             {
-                executeUpdate(statement2, username, new Gson().toJson(game), gameID);
+                executeUpdate(statement2, username, new Gson().toJson(updatedGame), gameID);
             }
             catch (DataAccessException e)
             {
@@ -236,7 +231,8 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
                 ps.setString(1, username);
                 try (var rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return readUser(rs);
+                        var json = rs.getString("json");
+                        return new Gson().fromJson(json, UserData.class);
                     }
                 }
             }
@@ -255,11 +251,11 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
                 ps.setString(1, username);
                 try (var rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        for (UserData user : USERS) {
-                            if (Objects.equals(user.username(), username)) {
+                        //for (UserData user : USERS) {
+                            //if (Objects.equals(user.username(), username)) {
                                 return true;
-                            }
-                        }
+                            //}
+                        //}
                     }
                 }
             }
@@ -274,27 +270,18 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
     public void createUser(UserData user) {
         var statement = "INSERT INTO users (username, password, email, json) VALUES (?, ?, ?, ?)";
         try {
-            executeUpdate(statement, user.username(), user.password(), user.email(), new Gson().toJson(user));
+            String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+            executeUpdate(statement, user.username(), hashedPassword, user.email(), new Gson().toJson(user));
         } catch (DataAccessException e) {
             System.out.println("createUser");
             System.out.println(e.getMessage());
         }
     }
 
-    private UserData readUser(ResultSet rs) throws SQLException {
-        var json = rs.getString("json");
-        return new Gson().fromJson(json, UserData.class);
-    }
-
-    private GameData readGame(ResultSet rs) throws SQLException {
-        var json = rs.getString("json");
-        return new Gson().fromJson(json, GameData.class);
-    }
-
     private static String getUsername(AuthData authData) throws SQLException {
         String username = "";
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT username FROM auth WHERE auth=?";
+            var statement = "SELECT username FROM auth WHERE authToken=?";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, authData.authToken());
                 try (var rs = ps.executeQuery()) {

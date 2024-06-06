@@ -22,9 +22,16 @@ public class Server {
 
     //Constructor for StandardAPITests
     public Server(){
-        AuthDAO authDAO = new MemoryAuthDAO();
-        GameDAO gameDAO = new MemoryGameDAO();
-        UserDAO userDAO = new MemoryUserDAO();
+        AuthDAO authDAO;
+        GameDAO gameDAO;
+        UserDAO userDAO;
+        try {
+            authDAO = new SqlDataAccess();
+            gameDAO = new SqlDataAccess();
+            userDAO = new SqlDataAccess();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
         clearService = new ClearService(authDAO, gameDAO, userDAO);
         gameService = new GameService(authDAO, gameDAO);
         userService = new UserService(authDAO, userDAO);

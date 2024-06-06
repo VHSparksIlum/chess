@@ -1,8 +1,7 @@
 package service;
 
 import dataaccess.*;
-import dataaccess.memory.MemoryAuthDAO;
-import dataaccess.memory.MemoryUserDAO;
+import org.mindrot.jbcrypt.BCrypt;
 import model.AuthData;
 import model.UserData;
 
@@ -19,8 +18,12 @@ public class UserService {
     }
 
     static {
-        userDAO = new MemoryUserDAO();
-        authDAO = new MemoryAuthDAO();
+        try {
+            userDAO = new SqlDataAccess();
+            authDAO = new SqlDataAccess();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static AuthData register(UserData user) throws DataAccessException {
@@ -43,7 +46,9 @@ public class UserService {
         UserData getUser = userDAO.getUser(username);
 
         if((getUser!=null) && (getUser.password().equals(password))) {
-            return createNewAuth(username);
+            String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+            writeHashedPasswordToDatabase(username, hashedPassword);
+                return createNewAuth(username);
         } else {
             throw new DataAccessException("Unauthorized");
         }
@@ -55,6 +60,21 @@ public class UserService {
         } else{
             throw new DataAccessException("Unauthorized");
         }
+    }
+
+    private static void writeHashedPasswordToDatabase(String username, String hashedPassword) {
+
+    }
+
+    private static void readHashedPasswordFromDatabase(String username){
+        
+    }
+
+    boolean verifyUser(String username, String providedClearTextPassword) {
+//        var hashedPassword = readHashedPasswordFromDatabase(username);
+//
+//        return BCrypt.checkpw(providedClearTextPassword, hashedPassword);
+        return true;
     }
 
     private static AuthData createNewAuth(String username) {

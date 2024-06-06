@@ -22,7 +22,7 @@ public class GameService {
         if (Objects.equals(game.gameName(), "")) {
             throw new DataAccessException("Bad Request");
         }
-        return (GameData) gameDAO.createGame(game);
+        return gameDAO.createGame(game);
     }
 
     public void joinGame(String authToken, String playerColor, Integer gameID) throws DataAccessException {
