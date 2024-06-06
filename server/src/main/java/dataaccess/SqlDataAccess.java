@@ -330,21 +330,6 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
         }
     }
 
-//    public void storeUserPassword(String username, String hashedPassword) {
-//        try (Connection connection = DatabaseManager.getConnection();
-//             PreparedStatement statement = connection.prepareStatement("INSERT INTO users (username, password) VALUES (?, ?)")) {
-//            statement.setString(1, username);
-//            statement.setString(2, hashedPassword);
-//            statement.executeUpdate();
-//        } catch (SQLException e) {
-//            System.out.println("storeUserPassword");
-//            System.out.println(e.getMessage());
-//        } catch (DataAccessException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
-
-
     private static String readHashedPasswordFromDatabase(String username) {
         String hashedPassword = null;
         try (Connection connection = DatabaseManager.getConnection();
