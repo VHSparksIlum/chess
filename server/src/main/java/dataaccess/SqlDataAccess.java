@@ -89,7 +89,6 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
               `username` varchar(256) NOT NULL,
               `password` varchar(256) NOT NULL,
               `email` varchar(256),
-              `json` TEXT DEFAULT NULL,
               PRIMARY KEY (`username`),
               INDEX(username)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -239,8 +238,11 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
                 ps.setString(1, username);
                 try (var rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        var json = rs.getString("json");
-                        return new Gson().fromJson(json, UserData.class);
+                        String name = rs.getString("username");
+                        String password = rs.getString("password");
+                        String email = rs.getString("email");
+
+                        return new UserData(name, password, email);
                     }
                 }
             }
@@ -250,6 +252,7 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
         }
         return null;
     }
+
 
     @Override
     public boolean foundUser(String username) {
@@ -276,20 +279,22 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
 
     @Override
     public void createUser(UserData user) {
-        var statement = "INSERT INTO users (username, password, email, json) VALUES (?, ?, ?, ?)";
         try {
             if (foundUser(user.username())) {
                 throw new DataAccessException("User already exists");
             }
-            String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
-            storeUserPassword(user.username(), hashedPassword);
 
-            executeUpdate(statement, user.username(), hashedPassword, user.email(), new Gson().toJson(user));
+            String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+            //storeUserPassword(user.username(), hashedPassword);
+
+            String statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
+            executeUpdate(statement, user.username(), hashedPassword, user.email());
         } catch (DataAccessException e) {
             System.out.println("createUser");
             System.out.println(e.getMessage());
         }
     }
+
 
     private static String getUsername(AuthData authData) throws SQLException {
         String username = "";
@@ -325,20 +330,20 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
         }
     }
 
-    public void storeUserPassword(String username, String password) {
-        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-        try (Connection connection = DatabaseManager.getConnection();
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO users (username, password) VALUES (?, ?)")) {
-            statement.setString(1, username);
-            statement.setString(2, hashedPassword);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("storePassword");
-            System.out.println(e.getMessage());
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    public void storeUserPassword(String username, String hashedPassword) {
+//        try (Connection connection = DatabaseManager.getConnection();
+//             PreparedStatement statement = connection.prepareStatement("INSERT INTO users (username, password) VALUES (?, ?)")) {
+//            statement.setString(1, username);
+//            statement.setString(2, hashedPassword);
+//            statement.executeUpdate();
+//        } catch (SQLException e) {
+//            System.out.println("storeUserPassword");
+//            System.out.println(e.getMessage());
+//        } catch (DataAccessException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
 
     private static String readHashedPasswordFromDatabase(String username) {
         String hashedPassword = null;
