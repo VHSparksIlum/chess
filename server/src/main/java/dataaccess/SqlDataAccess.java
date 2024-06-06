@@ -140,11 +140,15 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
     public List<GameData> listGames() {
         List<GameData> gamesList = new ArrayList<>();
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT json FROM games";
+            var statement = "SELECT id, json FROM games";
             try (var ps = conn.prepareStatement(statement)) {
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        gamesList.add(new Gson().fromJson(rs.getString("json"), GameData.class));
+                        int id = rs.getInt("id");
+                        String json = rs.getString("json");
+                        GameData game = new Gson().fromJson(json, GameData.class);
+                        game = new GameData(id, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
+                        gamesList.add(game);
                     }
                     return gamesList;
                 }
@@ -155,6 +159,7 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
         }
         return null;
     }
+
 
     @Override
     public GameData getGame(int gameID) {
