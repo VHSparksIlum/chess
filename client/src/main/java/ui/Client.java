@@ -46,6 +46,11 @@ public class Client {
                 case "list" -> listGames(params);
                 case "create" -> createGame(params);
                 case "join" -> joinGame(params);
+//                case "draw" -> drawBoard(chessGame);
+//                case "move" -> makeMove(params);
+//                case "leave" -> leaveGame();
+//                case "resign" -> resignGame();
+//                case "highlight" -> highlightMoves(chessGame, params);
                 case "quit" -> "quit";
                 default -> help();
             };
