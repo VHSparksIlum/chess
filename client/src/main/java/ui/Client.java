@@ -147,12 +147,6 @@ public class Client {
     }
 
         public String help () {
-//        if (state == State.SIGNEDOUT) {
-//            return """
-//                    - signIn <yourname>
-//                    - quit
-//                    """;
-//        }
             return """
                     - Register
                     - Login
@@ -164,12 +158,6 @@ public class Client {
                     - Help
                     """;
         }
-
-//    private void assertSignedIn() throws ResponseException {
-//        if (state == State.SIGNEDOUT) {
-//            throw new ResponseException(400, "You must sign in");
-//        }
-//    }
 
         public int getState () {
             return state;
