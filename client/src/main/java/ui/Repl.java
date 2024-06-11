@@ -20,7 +20,7 @@ public class Repl {
         Scanner scanner = new Scanner(System.in);
         var result = "";
         while (!result.equals("quit")) {
-            //while (state == 0 && !result.equals("quit")) {
+            //=while (state == 0 && !result.equals("quit")) {
             printPrompt();
             String line = scanner.nextLine();
             //}
@@ -29,7 +29,7 @@ public class Repl {
                 result = client.eval(line);
                 state = client.getState();
                 if (state == 1) {
-                    //client.setAuthData(client.getAuth());
+                    client.setAuthData(client.getAuthData());
                     client.setState(0);
                     System.out.println(EscapeSequences.SET_TEXT_COLOR_BLUE + client.eval("help"));
                 }
@@ -39,7 +39,7 @@ public class Repl {
                 System.out.print(msg);
             }
         }
-        while (state == 1 && !result.equals("quit")) {
+        if (state == 1) {
             printPrompt();
             String line = scanner.nextLine();
 
@@ -52,9 +52,9 @@ public class Repl {
                 }
                 if (state == 2) {
                     client.setState(1);
-//                    client.setGameID(client.getGameID());
-//                    client.setAuthData(client.getAuthData());
-                    //System.out.println(EscapeSequences.SET_BG_COLOR_WHITE + EscapeSequences.SET_TEXT_COLOR_BLACK + gameplayClient.eval("draw"));
+                    client.setGameID(client.getGameID());
+                    client.setAuthData(client.getAuthData());
+                    //System.out.println(EscapeSequences.SET_BG_COLOR_WHITE + EscapeSequences.SET_TEXT_COLOR_BLACK + client.eval("draw"));
                 }
                 System.out.print(EscapeSequences.SET_TEXT_COLOR_BLUE + result);
             } catch (Throwable e) {
@@ -62,7 +62,7 @@ public class Repl {
                 System.out.print(msg);
             }
         }
-        while (state == 2 && !result.equals("quit")) {
+        else if (state == 2) {
             printPrompt();
             String line = scanner.nextLine();
             System.out.println(EscapeSequences.SET_BG_COLOR_BLACK + EscapeSequences.SET_TEXT_COLOR_BLUE);
@@ -82,11 +82,6 @@ public class Repl {
         }
         System.out.println();
     }
-
-//    public void notify(Notification notification) {
-//        System.out.println(RED + notification.message());
-//        printPrompt();
-//    }
 
     private void printPrompt() {
         System.out.print(EscapeSequences.SET_BG_COLOR_BLACK + EscapeSequences.SET_TEXT_COLOR_GREEN + "\n[" + this.identifyState(this.state) + "] " +

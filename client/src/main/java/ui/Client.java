@@ -1,7 +1,6 @@
 package ui;
 
 import chess.ChessGame;
-import com.google.gson.Gson;
 import exception.ResponseException;
 import model.*;
 import request.*;
@@ -18,9 +17,7 @@ public class Client {
     private final ServerFacade server;
     private final String serverUrl;
     private int state = 0;
-    //private int gameID = 0;
-    private ChessGame chessGame;
-    //private int gameID;
+    private int gameID = 0;
 
     public Client(String serverURL) {
         this.server = new ServerFacade(serverURL);
@@ -33,30 +30,33 @@ public class Client {
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
-//                case "signin" -> signIn(params);
-//                case "rescue" -> rescuePet(params);
-//                case "list" -> listPets();
-//                case "signout" -> signOut();
-//                case "adopt" -> adoptPet(params);
-//                case "adoptall" -> adoptAllPets();
-                //CHANGE FOR CHESS
-                case "login" -> logIn(params);
                 case "register" -> register(params);
+                case "login" -> logIn(params);
                 case "logout" -> logOut(params);
-                case "list" -> listGames(params);
                 case "create" -> createGame(params);
                 case "join" -> joinGame(params);
-//                case "draw" -> drawBoard(chessGame);
-//                case "move" -> makeMove(params);
-//                case "leave" -> leaveGame();
-//                case "resign" -> resignGame();
-//                case "highlight" -> highlightMoves(chessGame, params);
+                case "list" -> listGames(params);
                 case "quit" -> "quit";
-                default -> help();
+                case "help" -> help();
+                default -> "";
             };
         } catch (ResponseException ex) {
             return ex.getMessage();
         }
+    }
+
+    public String register(String... params) throws ResponseException {
+        if (params.length >= 3) {
+            String username = params[0];
+            String password = params[1];
+            String email = params[2];
+            UserData user = new UserData(username, password, email);
+            LoginResult res = server.register(user);
+            this.auth = res.getAuthToken();
+            state = 1;
+            return String.format("Registered user %s", username);
+        }
+        throw new ResponseException(400, "Expected: <username> <password> <email>");
     }
 
     public String logIn(String... params) throws ResponseException {
@@ -72,18 +72,29 @@ public class Client {
         throw new ResponseException(400, "Expected: <username> <password>");
     }
 
-    public String register(String... params) throws ResponseException {
-        if (params.length >= 3) {
-            String username = params[0];
-            String password = params[1];
-            String email = params[2];
-            UserData user = new UserData(username, password, email);
-            LoginResult res = server.register(user);
-            this.auth = res.getAuthToken();
-            state = 1;
-            return String.format("Registered user %s", username);
+    public String logOut (String...params) throws ResponseException {
+        if (params.length == 0) {
+            AuthData info = new AuthData(auth, authData.username());
+            server.logout(info);
+            state = 0;
+            return "Logged out successfully";
         }
-        throw new ResponseException(400, "Expected: <username> <password> <email>");
+        throw new ResponseException(400, "Expected: logout");
+    }
+
+    public String createGame(String... params) throws ResponseException {
+        if (params.length == 1) {
+            {
+                AuthData info = new AuthData(auth, authData.username());
+                String gameName = params[0];
+                CreateGameRequest req = new CreateGameRequest(auth, gameName);
+                CreateGameResult res = server.createGame(req, info);
+                int gameID = res.getGameID();
+                return String.format("Created Game: %s (id: %s)", gameName, gameID);
+            }
+            //throw new ResponseException(400, "Expected: create <game_name>");
+        }
+        throw new ResponseException(400, "Expected: create <game_name>");
     }
 
     public String joinGame(String... params) throws ResponseException {
@@ -135,51 +146,6 @@ public class Client {
         throw new ResponseException(400, "Expected: list");
     }
 
-    public String createGame(String... params) throws ResponseException {
-        if (params.length == 1) {
-            {
-                AuthData info = new AuthData(auth, authData.username());
-                String gameName = params[0];
-                CreateGameRequest req = new CreateGameRequest(auth, gameName);
-                CreateGameResult res = server.createGame(req, info);
-                int gameID = res.getGameID();
-                return String.format("Created Game: %s (id: %s)", gameName, gameID);
-            }
-            //throw new ResponseException(400, "Expected: create <game_name>");
-        }
-        return "Failed to create game";
-    }
-
-//        public String adoptAllPets () throws ResponseException {
-//            assertSignedIn();
-//            var buffer = new StringBuilder();
-//            for (var pet : server.listPets()) {
-//                buffer.append(String.format("%s says %s%n", pet.name(), pet.sound()));
-//            }
-//
-//            server.deleteAllPets();
-//            return buffer.toString();
-//        }
-
-        public String logOut (String...params) throws ResponseException {
-            if (params.length == 0) {
-                AuthData info = new AuthData(auth, authData.username());
-                server.logout(info);
-                state = 0;
-                return "Logged out successfully";
-            }
-            throw new ResponseException(400, "Expected: logout");
-        }
-
-//    private Pet getPet(int id) throws ResponseException {
-//        for (var pet : server.listPets()) {
-//            if (pet.id() == id) {
-//                return pet;
-//            }
-//        }
-//        return null;
-//    }
-
         public String help () {
 //        if (state == State.SIGNEDOUT) {
 //            return """
@@ -188,16 +154,15 @@ public class Client {
 //                    """;
 //        }
             return """
-                    - Help
-                    - Quit
-                    - Login
                     - Register
-                    - Logout
+                    - Login
                     - Create
-                    - List
                     - Join
+                    - List
+                    - Logout
+                    - Quit
+                    - Help
                     """;
-            //re-organize
         }
 
 //    private void assertSignedIn() throws ResponseException {
@@ -218,16 +183,19 @@ public class Client {
             return auth;
         }
 
-//    public String getAuthData() {
-//        return authData;
-//    }
-//
-//    public void setAuthData(String authData) {
-//        this.authData = authData;
-//    }
-//
-//        public int getGameID () {
-//            return gameID;
-//        }
-
+    public AuthData getAuthData() {
+        return authData;
     }
+
+    public void setAuthData(AuthData authData) {
+        this.authData = authData;
+    }
+
+    public int getGameID () {
+        return gameID;
+    }
+
+    public void setGameID(int gameID) {
+        this.gameID = gameID;
+    }
+}
