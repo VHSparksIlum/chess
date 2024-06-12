@@ -21,12 +21,12 @@ public class ServerFacade {
 
     public LoginResult register(UserData user) throws ResponseException {
         var path = "/user";
-        return this.makeRequest("POST", path, user, LoginResult.class);
+        return this.makeRequest("POST", path, null, null, user, LoginResult.class);
     }
 
     public LoginResult login(LoginRequest info) throws ResponseException {
         var path = "/session";
-        return this.makeRequest("POST", path, info, LoginResult.class);
+        return this.makeRequest("POST", path, null, null, info, LoginResult.class);
     }
 
     public void logout(AuthData auth) throws ResponseException {
@@ -54,11 +54,9 @@ public class ServerFacade {
     public void clear() throws ResponseException
     {
         var path = "/db";
-        this.makeRequest("DELETE", path, null, null);
+        this.makeRequest("DELETE", path, null, null, null, null);
     }
-    private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass) throws ResponseException {
-        return makeRequest(method, path, null, null, request, responseClass);
-    } //second method for additional object in call
+
     private <T> T makeRequest(String method, String path, String headerKey, String headerValue, Object request, Class<T> responseClass) throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();

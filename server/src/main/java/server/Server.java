@@ -7,18 +7,15 @@ import model.UserData;
 import request.*;
 import result.*;
 import dataaccess.*;
-import dataaccess.memory.MemoryAuthDAO;
-import dataaccess.memory.MemoryGameDAO;
-import dataaccess.memory.MemoryUserDAO;
 import service.*;
 import spark.*;
 
 import java.util.Collection;
 
 public class Server {
-    private ClearService clearService;
-    private GameService gameService;
-    private UserService userService;
+    private final ClearService clearService;
+    private final GameService gameService;
+    private final UserService userService;
 
     //Constructor for StandardAPITests
     public Server(){
@@ -37,16 +34,12 @@ public class Server {
         userService = new UserService(authDAO, userDAO);
     }
 
-    //Constructor for Memory Server
-    public Server(AuthDAO authDAO, GameDAO gameDAO, UserDAO userDAO) {
-        clearService = new ClearService(authDAO, gameDAO, userDAO);
-        gameService = new GameService(authDAO, gameDAO);
-        userService = new UserService(authDAO, userDAO);
-    }
-
     //Constructor for SQL Server
-    public Server(SqlDataAccess sqlDataAccess) throws DataAccessException {
-        SqlDataAccess sql = new SqlDataAccess();
+    public Server(SqlDataAccess sql) throws DataAccessException {
+        //SqlDataAccess sql = new SqlDataAccess();
+        this.clearService = new ClearService(sql, sql, sql);
+        this.gameService = new GameService(sql, sql);
+        this.userService = new UserService(sql, sql);
     }
 
     public int run(int desiredPort) {

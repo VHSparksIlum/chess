@@ -15,13 +15,11 @@ public class Client {
     private String auth = null;
     private AuthData authData;
     private final ServerFacade server;
-    private final String serverUrl;
     private int state = 0;
     private int gameID = 0;
 
     public Client(String serverURL) {
         this.server = new ServerFacade(serverURL);
-        this.serverUrl = serverURL;
     }
 
     public String eval(String input) {
@@ -36,6 +34,7 @@ public class Client {
                 case "create" -> createGame(params);
                 case "join" -> joinGame(params);
                 case "list" -> listGames(params);
+                case "draw" -> drawBoard();
                 case "quit" -> "quit";
                 case "help" -> help();
                 default -> "";
@@ -53,26 +52,27 @@ public class Client {
             UserData user = new UserData(username, password, email);
             LoginResult res = server.register(user);
             this.auth = res.getAuthToken();
-            state = 1;
+            //state = 1;
             return String.format("Registered user %s", username);
         }
         throw new ResponseException(400, "Expected: <username> <password> <email>");
     }
 
     public String logIn(String... params) throws ResponseException {
-        if (params.length >= 1) {
+        if (params.length > 1) {
             String username = params[0];
             String password = params[1];
             LoginRequest info = new LoginRequest(username, password);
             LoginResult res = server.login(info);
             this.auth = res.getAuthToken();
+            this.authData = new AuthData(auth, res.getUsername());
             state = 1;
             return String.format("You signed in as %s.", username);
         }
         throw new ResponseException(400, "Expected: <username> <password>");
     }
 
-    public String logOut (String...params) throws ResponseException {
+    public String logOut(String... params) throws ResponseException {
         if (params.length == 0) {
             AuthData info = new AuthData(auth, authData.username());
             server.logout(info);
@@ -84,15 +84,16 @@ public class Client {
 
     public String createGame(String... params) throws ResponseException {
         if (params.length == 1) {
-            {
-                AuthData info = new AuthData(auth, authData.username());
+            if(authData != null) {
                 String gameName = params[0];
                 CreateGameRequest req = new CreateGameRequest(auth, gameName);
-                CreateGameResult res = server.createGame(req, info);
+                CreateGameResult res = server.createGame(req, authData);
                 int gameID = res.getGameID();
                 return String.format("Created Game: %s (id: %s)", gameName, gameID);
             }
-            //throw new ResponseException(400, "Expected: create <game_name>");
+            else {
+                throw new ResponseException(400, "You must be logged in to create a game.");
+            }
         }
         throw new ResponseException(400, "Expected: create <game_name>");
     }
@@ -119,13 +120,13 @@ public class Client {
                 gameID = Integer.parseInt(params[0]);
             }
             this.state = 2;
-//            this.gameID = gameID;
+            this.gameID = gameID;
             if (playerColor == null) {
                 return "Joined as observer";
             }
             return String.format("Joined as team %s", playerColor);
         }
-        throw new ResponseException(400, "Expected: join <black or white> <game_id>");
+        throw new ResponseException(400, "Expected: join <game_id> <white | black>");
     }
 
     public String listGames(String... params) throws ResponseException {
@@ -135,7 +136,8 @@ public class Client {
             ListGamesResult res = server.listGames(info);
             Collection<GameData> gamesList = res.getGames();
             for (GameData game : gamesList) {
-                result.append("Game ID: ").append(game.gameID()).append("\n");
+                //result.append("Game ID: ").append(game.gameID()).append("\n");
+                //change to list for joining function
                 result.append("Game Name: ").append(game.gameName()).append("\n");
                 result.append("White: ").append(game.whiteUsername()).append("\n");
                 result.append("Black: ").append(game.blackUsername()).append("\n");
@@ -146,30 +148,49 @@ public class Client {
         throw new ResponseException(400, "Expected: list");
     }
 
-        public String help () {
-            return """
-                    - Register
-                    - Login
-                    - Create
-                    - Join
-                    - List
-                    - Logout
-                    - Quit
-                    - Help
-                    """;
+    public String drawBoard() {
+        String[][] board = {
+                {EscapeSequences.WHITE_ROOK, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_QUEEN, EscapeSequences.WHITE_KING, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_ROOK},
+                {EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN},
+                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
+                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
+                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
+                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
+                {EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN},
+                {EscapeSequences.BLACK_ROOK, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_QUEEN, EscapeSequences.BLACK_KING, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_ROOK}
+        };
+        StringBuilder result = new StringBuilder();
+        result.append("  a  b  c  d  e  f  g  h\n");
+        result.append(" +--------------------+\n");
+        for (int i = 0; i < 8; i++) {
+            result.append(8 - i).append("|");
+            for (int j = 0; j < 8; j++) {
+                result.append(board[i][j]).append("|");
+            }
+            result.append("\n");
+        }
+        result.append(" +--------------------+\n");
+
+        return result.toString();
         }
 
-        public int getState () {
-            return state;
-        }
+    public String help() {
+        return """
+                - Register <username> <password> <email>
+                - Login <username> <password>
+                - Create <game name>
+                - Join <ID> <white|black>
+                - List
+                - Logout
+                - Quit
+                - Help
+                """;
+    }
+    public int getState () { return state; }
 
-        public void setState ( int state){
-            this.state = state;
-        }
-
-        public String getAuth () {
-            return auth;
-        }
+    public void setState ( int state){
+        this.state = state;
+    }
 
     public AuthData getAuthData() {
         return authData;
