@@ -53,7 +53,7 @@ public class Repl {
                         client.setState(1);
                         client.setGameID(client.getGameID());
                         client.setAuthData(client.getAuthData());
-                        System.out.println(EscapeSequences.SET_BG_COLOR_WHITE + EscapeSequences.SET_TEXT_COLOR_BLACK + client.eval("draw"));
+                        client.eval("draw");
                     }
                     System.out.print(EscapeSequences.SET_TEXT_COLOR_BLUE + result);
                 } catch (Throwable e) {

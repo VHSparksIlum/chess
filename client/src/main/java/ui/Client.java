@@ -28,13 +28,13 @@ public class Client {
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
-                case "register" -> register(params);
+                case "register" -> register(params); // find a way to make register turn into login after success
                 case "login" -> logIn(params);
                 case "logout" -> logOut(params);
                 case "create" -> createGame(params);
                 case "join" -> joinGame(params);
                 case "list" -> listGames(params);
-                case "draw" -> drawBoard();
+                case "draw" -> drawCombined();
                 case "quit" -> "quit";
                 case "help" -> help();
                 default -> "";
@@ -52,7 +52,7 @@ public class Client {
             UserData user = new UserData(username, password, email);
             LoginResult res = server.register(user);
             this.auth = res.getAuthToken();
-            //state = 1;
+            state = 1;
             return String.format("Registered user %s", username);
         }
         throw new ResponseException(400, "Expected: <username> <password> <email>");
@@ -131,13 +131,14 @@ public class Client {
 
     public String listGames(String... params) throws ResponseException {
         if (params.length == 0) {
-            StringBuilder result = new StringBuilder("GAMES LIST:\n");
+            StringBuilder result = new StringBuilder("\nGAMES LIST:\n");
             AuthData info = new AuthData(auth, authData.username());
             ListGamesResult res = server.listGames(info);
             Collection<GameData> gamesList = res.getGames();
+            this.state = 1;
             for (GameData game : gamesList) {
                 //result.append("Game ID: ").append(game.gameID()).append("\n");
-                //change to list for joining function
+
                 result.append("Game Name: ").append(game.gameName()).append("\n");
                 result.append("White: ").append(game.whiteUsername()).append("\n");
                 result.append("Black: ").append(game.blackUsername()).append("\n");
@@ -148,7 +149,43 @@ public class Client {
         throw new ResponseException(400, "Expected: list");
     }
 
-    public String drawBoard() {
+    public String drawBoardWhite() {
+        String[][] board = {
+                {EscapeSequences.BLACK_ROOK, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_QUEEN, EscapeSequences.BLACK_KING, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_ROOK},
+                {EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN},
+                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
+                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
+                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
+                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
+                {EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN},
+                {EscapeSequences.WHITE_ROOK, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_QUEEN, EscapeSequences.WHITE_KING, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_ROOK}
+        };
+        StringBuilder result = new StringBuilder();
+        result.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY).append(EscapeSequences.SET_TEXT_COLOR_BLACK);
+        result.append(" \u2003\u2003a \u2003b \u2003c \u2003d \u2003e \u2003f \u2003g \u2003h\u2003\u2003 ").append(EscapeSequences.SET_BG_COLOR_BLACK).append("\n");
+        for (int i = 0; i < 8; i++) {
+            result.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY).append(EscapeSequences.SET_TEXT_COLOR_BLACK);
+            result.append(" ").append(8 - i).append(" ");
+            for (int j = 0; j < 8; j++) {
+                if ((i + j) % 2 == 0) {
+                    result.append(EscapeSequences.SET_BG_COLOR_WHITE);
+                } else {
+                    result.append(EscapeSequences.SET_BG_COLOR_BLUE);
+                }
+                result.append(board[i][j]);
+            }
+            result.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
+            result.append(" ").append(8 - i).append(" ").append(EscapeSequences.SET_BG_COLOR_BLACK).append("\n");
+        }
+        result.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY).append(EscapeSequences.SET_TEXT_COLOR_BLACK);
+        result.append(" \u2003\u2003a \u2003b \u2003c \u2003d \u2003e \u2003f \u2003g \u2003h\u2003\u2003 ").append(EscapeSequences.SET_BG_COLOR_BLACK).append("\n");
+        result.append(EscapeSequences.RESET_TEXT_COLOR);
+
+        return result.toString();
+        }
+
+    //FOR PHASE 5 DRAW
+    public String drawBoardBlack() {
         String[][] board = {
                 {EscapeSequences.WHITE_ROOK, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_QUEEN, EscapeSequences.WHITE_KING, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_ROOK},
                 {EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN},
@@ -159,20 +196,34 @@ public class Client {
                 {EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN},
                 {EscapeSequences.BLACK_ROOK, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_QUEEN, EscapeSequences.BLACK_KING, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_ROOK}
         };
-        StringBuilder result = new StringBuilder();
-        result.append("  a  b  c  d  e  f  g  h\n");
-        result.append(" +--------------------+\n");
+        StringBuilder flipped = new StringBuilder();
+        flipped.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY).append(EscapeSequences.SET_TEXT_COLOR_BLACK);
+        flipped.append(" \u2003\u2003h \u2003g \u2003f \u2003e \u2003d \u2003c \u2003b \u2003a\u2003\u2003 ").append(EscapeSequences.SET_BG_COLOR_BLACK).append("\n");
         for (int i = 0; i < 8; i++) {
-            result.append(8 - i).append("|");
+            flipped.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY).append(EscapeSequences.SET_TEXT_COLOR_BLACK);
+            flipped.append(" ").append(i + 1).append(" ");
             for (int j = 0; j < 8; j++) {
-                result.append(board[i][j]).append("|");
+                if ((i + j) % 2 == 0) {
+                    flipped.append(EscapeSequences.SET_BG_COLOR_WHITE);
+                } else {
+                    flipped.append(EscapeSequences.SET_BG_COLOR_BLUE);
+                }
+                flipped.append(board[i][j]);
             }
-            result.append("\n");
+            flipped.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
+            flipped.append(" ").append(i + 1).append(" ").append(EscapeSequences.SET_BG_COLOR_BLACK).append("\n");
         }
-        result.append(" +--------------------+\n");
+        flipped.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY).append(EscapeSequences.SET_TEXT_COLOR_BLACK);
+        flipped.append(" \u2003\u2003h \u2003g \u2003f \u2003e \u2003d \u2003c \u2003b \u2003a\u2003\u2003 ").append(EscapeSequences.SET_BG_COLOR_BLACK).append("\n");
+        flipped.append(EscapeSequences.RESET_BG_COLOR).append(EscapeSequences.RESET_TEXT_COLOR);
 
-        return result.toString();
-        }
+        return flipped.toString();
+    }
+
+    public String drawCombined() {
+        return drawBoardWhite() + "\n" + drawBoardBlack();
+    }
+
 
     public String help() {
         return """
