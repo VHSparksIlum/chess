@@ -18,6 +18,9 @@ public class Client {
     private final Map<String, Integer> joinCodeToGameIDMap;
     private final Map<Integer, String> gameIDToJoinCodeMap;
 
+
+    //need to fix logout using last status if pressing enter
+    //improve error messages from failure: 401
     public Client(String serverURL) {
         this.server = new ServerFacade(serverURL);
         this.joinCodeToGameIDMap = new HashMap<>();
@@ -109,16 +112,22 @@ public class Client {
         throw new ResponseException(400, "Expected: create <game_name>");
     }
 
+    //prevent join of same user to both teams
     public String joinGame(String... params) throws ResponseException {
         if (authData != null) {
-            if (params.length == 2 || params.length == 1) {
+            if (params.length <= 2) {
                 AuthData info = new AuthData(auth, authData.username());
                 String playerColor = null;
                 int gameID = 0;
                 if (params.length == 2) {
                     String joinCode = params[0];
                     playerColor = params[1];
-                    gameID = getGameIDFromJoinCode(joinCode);
+                    if (joinCode.matches("[a-zA-Z0-9]+")) {
+                        gameID = getGameIDFromJoinCode(joinCode);
+                    } else {
+                        gameID = Integer.parseInt(joinCode);
+                    }
+                    //gameID = getGameIDFromJoinCode(joinCode);
                     //gameID = Integer.parseInt(params[1]);
 
                     ChessGame.TeamColor teamColor = null;
@@ -131,7 +140,12 @@ public class Client {
                     server.joinGame(info, req);
 
                 } else {
-                    gameID = Integer.parseInt(params[0]);
+                    String joinCode = params[0];
+                    if (joinCode.matches("[a-zA-Z0-9]+")) {
+                        gameID = getGameIDFromJoinCode(joinCode);
+                    } else {
+                        gameID = Integer.parseInt(joinCode);
+                    }
                 }
                 this.state = 2;
                 this.gameID = gameID;
@@ -153,6 +167,7 @@ public class Client {
         }
     }
 
+    //review hashmap initialization
     public String listGames(String... params) throws ResponseException {
         if (authData != null) {
             if (params.length == 0) {
@@ -160,6 +175,7 @@ public class Client {
                 AuthData info = new AuthData(auth, authData.username());
                 ListGamesResult res = server.listGames(info);
                 Collection<GameData> gamesList = res.getGames();
+                //System.out.println("Games List: " + gamesList);
                 //System.out.println("Number of games in the list: " + gamesList.size()); // Debugging
                 for (GameData game : gamesList) {
                     String joinCode = getJoinCodeFromGameID(game.gameID());
@@ -171,9 +187,9 @@ public class Client {
                         result.append("\n");
                     }
                 }
-                if (result.length() == 13) {
-                    return "No games available.";
-                }
+//                if (result.length() == 13) {
+//                    return "No games available.";
+//                }
                 return result.toString();
             }
 
@@ -186,16 +202,44 @@ public class Client {
 
 
     public String drawBoardWhite() {
-        String[][] board = {
-                {EscapeSequences.BLACK_ROOK, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_QUEEN, EscapeSequences.BLACK_KING, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_ROOK},
-                {EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN},
-                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
-                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
-                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
-                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
-                {EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN},
-                {EscapeSequences.WHITE_ROOK, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_QUEEN, EscapeSequences.WHITE_KING, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_ROOK}
-        };
+        String[][] board = new String[8][8];
+
+        board[0][0] = EscapeSequences.BLACK_ROOK;
+        board[0][1] = EscapeSequences.BLACK_KNIGHT;
+        board[0][2] = EscapeSequences.BLACK_BISHOP;
+        board[0][3] = EscapeSequences.BLACK_QUEEN;
+        board[0][4] = EscapeSequences.BLACK_KING;
+        board[0][5] = EscapeSequences.BLACK_BISHOP;
+        board[0][6] = EscapeSequences.BLACK_KNIGHT;
+        board[0][7] = EscapeSequences.BLACK_ROOK;
+
+        for (int i = 1; i < 2; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = EscapeSequences.BLACK_PAWN;
+            }
+        }
+
+        for (int i = 2; i < 6; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = EscapeSequences.EMPTY;
+            }
+        }
+
+        for (int i = 6; i < 7; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = EscapeSequences.WHITE_PAWN;
+            }
+        }
+
+        board[7][0] = EscapeSequences.WHITE_ROOK;
+        board[7][1] = EscapeSequences.WHITE_KNIGHT;
+        board[7][2] = EscapeSequences.WHITE_BISHOP;
+        board[7][3] = EscapeSequences.WHITE_QUEEN;
+        board[7][4] = EscapeSequences.WHITE_KING;
+        board[7][5] = EscapeSequences.WHITE_BISHOP;
+        board[7][6] = EscapeSequences.WHITE_KNIGHT;
+        board[7][7] = EscapeSequences.WHITE_ROOK;
+
         StringBuilder result = new StringBuilder();
         result.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY).append(EscapeSequences.SET_TEXT_COLOR_BLACK);
         result.append(" \u2003\u2003a \u2003b \u2003c \u2003d \u2003e \u2003f \u2003g \u2003h\u2003\u2003 ").append(EscapeSequences.SET_BG_COLOR_BLACK).append("\n");
@@ -222,16 +266,44 @@ public class Client {
 
     //FOR PHASE 5 DRAW
     public String drawBoardBlack() {
-        String[][] board = {
-                {EscapeSequences.WHITE_ROOK, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_QUEEN, EscapeSequences.WHITE_KING, EscapeSequences.WHITE_BISHOP, EscapeSequences.WHITE_KNIGHT, EscapeSequences.WHITE_ROOK},
-                {EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN, EscapeSequences.WHITE_PAWN},
-                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
-                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
-                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
-                {EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY, EscapeSequences.EMPTY},
-                {EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN, EscapeSequences.BLACK_PAWN},
-                {EscapeSequences.BLACK_ROOK, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_QUEEN, EscapeSequences.BLACK_KING, EscapeSequences.BLACK_BISHOP, EscapeSequences.BLACK_KNIGHT, EscapeSequences.BLACK_ROOK}
-        };
+        String[][] board = new String[8][8];
+
+        board[7][0] = EscapeSequences.BLACK_ROOK;
+        board[7][1] = EscapeSequences.BLACK_KNIGHT;
+        board[7][2] = EscapeSequences.BLACK_BISHOP;
+        board[7][3] = EscapeSequences.BLACK_KING;
+        board[7][4] = EscapeSequences.BLACK_QUEEN;
+        board[7][5] = EscapeSequences.BLACK_BISHOP;
+        board[7][6] = EscapeSequences.BLACK_KNIGHT;
+        board[7][7] = EscapeSequences.BLACK_ROOK;
+
+        for (int i = 6; i < 7; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = EscapeSequences.BLACK_PAWN;
+            }
+        }
+
+        for (int i = 2; i < 6; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = EscapeSequences.EMPTY;
+            }
+        }
+
+        for (int i = 1; i < 2; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = EscapeSequences.WHITE_PAWN;
+            }
+        }
+
+        board[0][0] = EscapeSequences.WHITE_ROOK;
+        board[0][1] = EscapeSequences.WHITE_KNIGHT;
+        board[0][2] = EscapeSequences.WHITE_BISHOP;
+        board[0][3] = EscapeSequences.WHITE_KING;
+        board[0][4] = EscapeSequences.WHITE_QUEEN;
+        board[0][5] = EscapeSequences.WHITE_BISHOP;
+        board[0][6] = EscapeSequences.WHITE_KNIGHT;
+        board[0][7] = EscapeSequences.WHITE_ROOK;
+
         StringBuilder flipped = new StringBuilder();
         flipped.append(EscapeSequences.SET_BG_COLOR_LIGHT_GREY).append(EscapeSequences.SET_TEXT_COLOR_BLACK);
         flipped.append(" \u2003\u2003h \u2003g \u2003f \u2003e \u2003d \u2003c \u2003b \u2003a\u2003\u2003 ").append(EscapeSequences.SET_BG_COLOR_BLACK).append("\n");
@@ -296,9 +368,9 @@ public class Client {
     }
 
     public String generateJoinCode() {
-        String joinCode = UUID.randomUUID().toString().substring(0, 8); // Generate a random join code
+        String joinCode = UUID.randomUUID().toString().substring(0, 8);
         while (joinCodeToGameIDMap.containsKey(joinCode)) {
-            joinCode = UUID.randomUUID().toString().substring(0, 8); // Regenerate if the join code already exists
+            joinCode = UUID.randomUUID().toString().substring(0, 8);
         }
         return joinCode;
     }
