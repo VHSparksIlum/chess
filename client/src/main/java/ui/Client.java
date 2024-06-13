@@ -7,9 +7,7 @@ import request.*;
 import result.*;
 import server.ServerFacade;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 
 public class Client {
     private String auth = null;
@@ -17,9 +15,13 @@ public class Client {
     private final ServerFacade server;
     private int state = 0;
     private int gameID = 0;
+    private final Map<String, Integer> joinCodeToGameIDMap;
+    private final Map<Integer, String> gameIDToJoinCodeMap;
 
     public Client(String serverURL) {
         this.server = new ServerFacade(serverURL);
+        this.joinCodeToGameIDMap = new HashMap<>();
+        this.gameIDToJoinCodeMap = new HashMap<>();
     }
 
     public String eval(String input) {
@@ -28,7 +30,7 @@ public class Client {
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
-                case "register" -> register(params); // find a way to make register turn into login after success
+                case "register" -> register(params);
                 case "login" -> logIn(params);
                 case "logout" -> logOut(params);
                 case "create" -> createGame(params);
@@ -53,7 +55,9 @@ public class Client {
             LoginResult res = server.register(user);
             this.auth = res.getAuthToken();
             state = 1;
-            return String.format("Registered user %s", username);
+            System.out.printf(EscapeSequences.SET_TEXT_COLOR_MAGENTA);
+            System.out.printf("Registered user %s%n", username);
+            return logIn(username, password);
         }
         throw new ResponseException(400, "Expected: <username> <password> <email>");
     }
@@ -73,13 +77,18 @@ public class Client {
     }
 
     public String logOut(String... params) throws ResponseException {
-        if (params.length == 0) {
-            AuthData info = new AuthData(auth, authData.username());
-            server.logout(info);
-            state = 0;
-            return "Logged out successfully";
+        if (authData != null) {
+            if (params.length == 0) {
+                AuthData info = new AuthData(auth, authData.username());
+                server.logout(info);
+                state = 0;
+                return "Logged out successfully";
+            }
+            throw new ResponseException(400, "Expected: logout");
         }
-        throw new ResponseException(400, "Expected: logout");
+        else {
+            throw new ResponseException(400, "You must be logged in to log out.");
+        }
     }
 
     public String createGame(String... params) throws ResponseException {
@@ -89,7 +98,9 @@ public class Client {
                 CreateGameRequest req = new CreateGameRequest(auth, gameName);
                 CreateGameResult res = server.createGame(req, authData);
                 int gameID = res.getGameID();
-                return String.format("Created Game: %s (id: %s)", gameName, gameID);
+                String joinCode = generateJoinCode();
+                saveJoinCode(joinCode, gameID);
+                return String.format("Created Game: %s (Join Code: %s)", gameName, joinCode);
             }
             else {
                 throw new ResponseException(400, "You must be logged in to create a game.");
@@ -99,55 +110,80 @@ public class Client {
     }
 
     public String joinGame(String... params) throws ResponseException {
-        if (params.length == 2 || params.length == 1) {
-            AuthData info = new AuthData(auth, authData.username());
-            String playerColor = null;
-            int gameID = 0;
-            if (params.length == 2) {
-                playerColor = params[0];
-                gameID = Integer.parseInt(params[1]);
+        if (authData != null) {
+            if (params.length == 2 || params.length == 1) {
+                AuthData info = new AuthData(auth, authData.username());
+                String playerColor = null;
+                int gameID = 0;
+                if (params.length == 2) {
+                    String joinCode = params[0];
+                    playerColor = params[1];
+                    gameID = getGameIDFromJoinCode(joinCode);
+                    //gameID = Integer.parseInt(params[1]);
 
-                ChessGame.TeamColor teamColor = null;
-                if (Objects.equals(playerColor, "black"))
-                    teamColor = ChessGame.TeamColor.BLACK;
-                else if (Objects.equals(playerColor, "white")) {
-                    teamColor = ChessGame.TeamColor.WHITE;
+                    ChessGame.TeamColor teamColor = null;
+                    if (Objects.equals(playerColor, "black"))
+                        teamColor = ChessGame.TeamColor.BLACK;
+                    else if (Objects.equals(playerColor, "white")) {
+                        teamColor = ChessGame.TeamColor.WHITE;
+                    }
+                    JoinGameRequest req = new JoinGameRequest(playerColor, gameID);
+                    server.joinGame(info, req);
+
+                } else {
+                    gameID = Integer.parseInt(params[0]);
                 }
-                JoinGameRequest req = new JoinGameRequest(playerColor, gameID);
-                server.joinGame(info, req);
-
-            } else {
-                gameID = Integer.parseInt(params[0]);
+                this.state = 2;
+                this.gameID = gameID;
+                if (playerColor == null) {
+                    System.out.print("Joined as observer\n");
+                    return drawCombined();
+                }
+                System.out.printf("Joined as team %s%n", playerColor);
+                if (Objects.equals(playerColor, "black")) {
+                    return drawBoardBlack();
+                } else {
+                    return drawBoardWhite();
+                }
             }
-            this.state = 2;
-            this.gameID = gameID;
-            if (playerColor == null) {
-                return "Joined as observer";
-            }
-            return String.format("Joined as team %s", playerColor);
+            throw new ResponseException(400, "Expected: join <join_code> <white | black>");
         }
-        throw new ResponseException(400, "Expected: join <game_id> <white | black>");
+        else {
+            throw new ResponseException(400, "Unauthorized");
+        }
     }
 
     public String listGames(String... params) throws ResponseException {
-        if (params.length == 0) {
-            StringBuilder result = new StringBuilder("\nGAMES LIST:\n");
-            AuthData info = new AuthData(auth, authData.username());
-            ListGamesResult res = server.listGames(info);
-            Collection<GameData> gamesList = res.getGames();
-            this.state = 1;
-            for (GameData game : gamesList) {
-                //result.append("Game ID: ").append(game.gameID()).append("\n");
-
-                result.append("Game Name: ").append(game.gameName()).append("\n");
-                result.append("White: ").append(game.whiteUsername()).append("\n");
-                result.append("Black: ").append(game.blackUsername()).append("\n");
-                result.append("\n");
+        if (authData != null) {
+            if (params.length == 0) {
+                StringBuilder result = new StringBuilder("\nGAMES LIST:\n");
+                AuthData info = new AuthData(auth, authData.username());
+                ListGamesResult res = server.listGames(info);
+                Collection<GameData> gamesList = res.getGames();
+                //System.out.println("Number of games in the list: " + gamesList.size()); // Debugging
+                for (GameData game : gamesList) {
+                    String joinCode = getJoinCodeFromGameID(game.gameID());
+                    if (joinCode != null && !joinCode.isEmpty()) {
+                        result.append("Game Name: ").append(game.gameName()).append("\n");
+                        result.append("Join Code: ").append(joinCode).append("\n");
+                        result.append("White: ").append(game.whiteUsername()).append("\n");
+                        result.append("Black: ").append(game.blackUsername()).append("\n");
+                        result.append("\n");
+                    }
+                }
+                if (result.length() == 13) {
+                    return "No games available.";
+                }
+                return result.toString();
             }
-            return result.toString();
+
+            throw new ResponseException(400, "Expected: list");
         }
-        throw new ResponseException(400, "Expected: list");
+        else {
+            throw new ResponseException(401, "Unauthorized");
+        }
     }
+
 
     public String drawBoardWhite() {
         String[][] board = {
@@ -257,5 +293,30 @@ public class Client {
 
     public void setGameID(int gameID) {
         this.gameID = gameID;
+    }
+
+    public String generateJoinCode() {
+        String joinCode = UUID.randomUUID().toString().substring(0, 8); // Generate a random join code
+        while (joinCodeToGameIDMap.containsKey(joinCode)) {
+            joinCode = UUID.randomUUID().toString().substring(0, 8); // Regenerate if the join code already exists
+        }
+        return joinCode;
+    }
+
+    public void saveJoinCode(String joinCode, int gameID) {
+        joinCodeToGameIDMap.put(joinCode, gameID);
+        gameIDToJoinCodeMap.put(gameID, joinCode);
+    }
+
+    public int getGameIDFromJoinCode(String joinCode) {
+        if (joinCodeToGameIDMap.containsKey(joinCode)) {
+            return joinCodeToGameIDMap.get(joinCode);
+        } else {
+            throw new IllegalArgumentException("Invalid join code");
+        }
+    }
+
+    public String getJoinCodeFromGameID(int gameID) {
+        return gameIDToJoinCodeMap.getOrDefault(gameID, null);
     }
 }

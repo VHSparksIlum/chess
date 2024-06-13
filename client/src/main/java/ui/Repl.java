@@ -14,7 +14,7 @@ public class Repl {
     public void run() {
         System.out.println(EscapeSequences.SET_TEXT_BOLD +EscapeSequences.SET_BG_COLOR_LIGHT_GREY +
                 EscapeSequences.SET_TEXT_COLOR_BLACK +" ♕ Welcome to 240 Chess Game "+EscapeSequences.BLACK_QUEEN);
-        System.out.println(EscapeSequences.RESET_BG_COLOR +EscapeSequences.SET_TEXT_COLOR_MAGENTA +EscapeSequences.RESET_TEXT_BOLD_FAINT);
+        System.out.println(EscapeSequences.SET_BG_COLOR_BLACK + EscapeSequences.SET_TEXT_COLOR_MAGENTA + EscapeSequences.RESET_TEXT_BOLD_FAINT);
         System.out.print(client.help());
 
         Scanner scanner = new Scanner(System.in);
@@ -29,8 +29,8 @@ public class Repl {
                     state = client.getState();
                     if (state == 1) {
                         client.setAuthData(client.getAuthData());
-                        client.setState(0);
-                        System.out.println(EscapeSequences.SET_TEXT_COLOR_BLUE + client.eval("help"));
+                        //client.setState(0);
+                        //System.out.println(EscapeSequences.SET_TEXT_COLOR_BLUE + client.eval("help"));
                     }
                     System.out.print(EscapeSequences.SET_TEXT_COLOR_MAGENTA + result);
                 } catch (Throwable e) {
@@ -50,12 +50,12 @@ public class Repl {
                         System.out.println(EscapeSequences.SET_TEXT_COLOR_MAGENTA + client.eval("help"));
                     }
                     if (state == 2) {
-                        client.setState(1);
+                        //client.setState(1);
                         client.setGameID(client.getGameID());
                         client.setAuthData(client.getAuthData());
                         client.eval("draw");
                     }
-                    System.out.print(EscapeSequences.SET_TEXT_COLOR_BLUE + result);
+                    System.out.print(EscapeSequences.SET_TEXT_COLOR_MAGENTA + result);
                 } catch (Throwable e) {
                     var msg = e.toString();
                     System.out.print(msg);
