@@ -204,9 +204,9 @@ public class Client {
                         result.append("\n");
                     }
                 }
-//                if (result.length() == 13) {
-//                    return "No games available.";
-//                }
+                if (result.length() == 13) {
+                    return "No games available.";
+                }
                 return result.toString();
             }
 

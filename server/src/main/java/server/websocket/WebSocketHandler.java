@@ -72,9 +72,9 @@ public class WebSocketHandler {
         GameData gameData = gameService.getGame(gameID);
         ChessGame game = gameData.game();
         String username = gameService.getUsername(new AuthData(authToken, user));
-        if (teamColor == ChessGame.TeamColor.WHITE)
-        {
-            if (!Objects.equals(gameData.whiteUsername(), username))
+        //if (teamColor == ChessGame.TeamColor.WHITE)
+        //{
+            if (!Objects.equals(gameData.whiteUsername(), username) || (!Objects.equals(gameData.blackUsername(), username)))
             {
                 try {
                     connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Already taken!!"));
@@ -84,22 +84,7 @@ public class WebSocketHandler {
                 }
                 return;
             }
-        }
-
-        if (teamColor == ChessGame.TeamColor.BLACK)
-        {
-            if (!Objects.equals(gameData.blackUsername(), username))
-            {
-                try {
-                    connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Already taken!!"));
-                    System.out.println("sent error");
-                } catch (IOException e) {
-                    throw new ResponseException(500, e.getMessage());
-                }
-                return;
-            }
-        }
-
+        //}
 
         var message1 = String.format("Player %s has joined team: %s", username, teamColor.toString());
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
@@ -309,4 +294,6 @@ public class WebSocketHandler {
             throw new ResponseException(500, e.getMessage());
         }
     }
+
+
 }
