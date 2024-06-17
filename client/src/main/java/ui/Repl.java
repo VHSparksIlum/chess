@@ -126,7 +126,7 @@ public class Repl implements ServerMessageHandler  {
             }
             case LOAD_GAME: {
                 LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
-                System.out.println(EscapeSequences.SET_BG_COLOR_WHITE + EscapeSequences.SET_TEXT_COLOR_BLACK + client.drawBoard(loadGameMessage.getGame()));
+                System.out.println(EscapeSequences.SET_BG_COLOR_WHITE + EscapeSequences.SET_TEXT_COLOR_BLACK + client.drawBoardWhite()); //client.drawBoard(loadGameMessage.getGame())
                 System.out.println(EscapeSequences.SET_BG_COLOR_BLACK);
                 printPrompt();
                 break;

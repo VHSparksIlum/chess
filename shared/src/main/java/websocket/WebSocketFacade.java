@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class WebSocketFacade extends Endpoint {
+public class WebSocketFacade {
 
     Session session;
     ServerMessageHandler serverMessageHandler;
@@ -38,23 +38,9 @@ public class WebSocketFacade extends Endpoint {
         }
     }
 
-    //Endpoint requires this method, but you don't have to do anything
-    @Override
-    public void onOpen(Session session, EndpointConfig endpointConfig) {
-    }
-
-    public void joinPlayer(AuthData auth, int gameID, ChessGame.TeamColor teamColor) throws ResponseException {
+    public void connect(AuthData auth, int gameID, ChessGame.TeamColor teamColor) throws ResponseException {
         try {
-            var cmd = new JoinPlayerCommand(auth.authToken(), gameID, teamColor);
-            this.session.getBasicRemote().sendText(new Gson().toJson(cmd));
-        } catch (IOException ex) {
-            throw new ResponseException(500, ex.getMessage());
-        }
-    }
-
-    public void joinObserver(AuthData auth, int gameID) throws ResponseException {
-        try {
-            var cmd = new JoinObserverCommand(auth.authToken(), gameID);
+            var cmd = new ConnectCommand(auth.authToken(), gameID, teamColor);
             this.session.getBasicRemote().sendText(new Gson().toJson(cmd));
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());

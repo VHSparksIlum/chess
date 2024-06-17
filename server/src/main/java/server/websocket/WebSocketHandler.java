@@ -38,16 +38,15 @@ public class WebSocketHandler {
         UserGameCommand cmd = new Gson().fromJson(message, UserGameCommand.class);
 
         switch (cmd.getCommandType()) {
-            case JOIN_PLAYER -> joinPlayer(message, session);
-            case JOIN_OBSERVER -> joinObserver(message, session);
+            case CONNECT -> connect(message, session);
             case MAKE_MOVE -> makeMove(message, session);
             case LEAVE -> leaveGame(message, session);
             case RESIGN -> resignGame(message, session);
         }
     }
 
-    public void joinPlayer(String message, Session session) throws ResponseException {
-        JoinPlayerCommand cmd = new Gson().fromJson(message, JoinPlayerCommand.class);
+    public void connect(String message, Session session) throws ResponseException {
+        ConnectCommand cmd = new Gson().fromJson(message, ConnectCommand.class);
         int gameID = cmd.getGameID();
         String auth = cmd.getAuthString();
         connections.add(gameID, auth, session);
@@ -103,55 +102,6 @@ public class WebSocketHandler {
 
 
         var message1 = String.format("Player %s has joined team: %s", username, teamColor.toString());
-        var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
-        var loadGameMessage = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
-        try {
-            connections.broadcast(gameID, auth, notification);
-            connections.sendOneLoadCommand(gameID, auth, loadGameMessage);
-        } catch (IOException e) {
-            throw new ResponseException(500, e.getMessage());
-        }
-    }
-
-    public void joinObserver(String message, Session session) throws ResponseException {
-        JoinObserverCommand cmd = new Gson().fromJson(message, JoinObserverCommand.class);
-        int gameID = cmd.getGameID();
-        String auth = cmd.getAuthString();
-        connections.add(gameID, auth, session);
-
-        JsonObject authDataJson = new Gson().fromJson(auth, JsonObject.class);
-
-        String user = authDataJson.get("username").getAsString();
-        String authToken = authDataJson.get("authToken").getAsString();
-
-        if (gameService.getGame(gameID) == null)
-        {
-            try {
-                connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: bad gameID"));
-            } catch (IOException e) {
-                throw new ResponseException(500, e.getMessage());
-            }
-            return;
-        }
-
-        try {
-            if (!GameService.checkAuthToken(auth))
-            {
-                try {
-                    connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: bad auth"));
-                } catch (IOException e) {
-                    throw new ResponseException(500, e.getMessage());
-                }
-                return;
-            }
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
-        }
-
-        GameData gameData = gameService.getGame(gameID);
-        ChessGame game = gameData.game();
-        String username = gameService.getUsername(new AuthData(authToken, user));
-        var message1 = String.format("Player %s has joined as observer", username);
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
         var loadGameMessage = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
         try {

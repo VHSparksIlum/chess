@@ -154,10 +154,10 @@ public class Client {
                     JoinGameRequest req = new JoinGameRequest(playerColor, gameID);
                     server.joinGame(info, req);
 
-                    ws.joinPlayer(info, gameID, teamColor);
+                    ws.connect(info, gameID, teamColor);
                 } else {
                     String joinCode = params[0];
-                    ws.joinObserver(info, gameID);
+                    ws.connect(info, gameID, null);
                     if (joinCode.matches("[a-zA-Z0-9]+")) {
                         gameID = getGameIDFromJoinCode(joinCode);
                     } else {
