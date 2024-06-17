@@ -1,6 +1,7 @@
 package ui;
 
 import java.util.Scanner;
+import websocket.*;
 
 public class Repl {
     private final Client client;

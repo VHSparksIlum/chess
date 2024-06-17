@@ -2,6 +2,7 @@ package ui;
 
 import chess.ChessGame;
 import exception.ResponseException;
+import websocket.*;
 import model.*;
 import request.*;
 import result.*;
