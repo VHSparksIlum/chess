@@ -6,7 +6,7 @@ import model.*;
 import request.*;
 import result.*;
 import server.ServerFacade;
-import websocket.WebSocketFacade;
+//import websocket.WebSocketFacade;
 import websocket.messages.ServerMessageHandler;
 
 import java.util.*;
@@ -16,7 +16,7 @@ public class Client {
     private AuthData authData;
     private final ServerFacade server;
     private final String serverURL;
-    private WebSocketFacade ws;
+    //private WebSocketFacade ws;
     private int state = 0;
     private int gameID = 0;
     private ChessGame chessGame;
@@ -130,7 +130,7 @@ public class Client {
     public String joinGame(String... params) throws ResponseException {
         if (authData != null) {
             if (params.length <= 2) {
-                this.ws = new WebSocketFacade(serverURL, serverMessageHandler);
+                //this.ws = new WebSocketFacade(serverURL, serverMessageHandler);
                 AuthData info = new AuthData(auth, authData.username());
                 String playerColor = null;
                 int gameID = 0;
@@ -154,10 +154,10 @@ public class Client {
                     JoinGameRequest req = new JoinGameRequest(playerColor, gameID);
                     server.joinGame(info, req);
 
-                    ws.connect(info, gameID, teamColor);
+                    //ws.connect(info, gameID, teamColor);
                 } else {
                     String joinCode = params[0];
-                    ws.connect(info, gameID, null);
+                    //ws.connect(info, gameID, null);
                     if (joinCode.matches("[a-zA-Z0-9]+")) {
                         gameID = getGameIDFromJoinCode(joinCode);
                     } else {
