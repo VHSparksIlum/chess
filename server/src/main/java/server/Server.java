@@ -7,17 +7,19 @@ import model.UserData;
 import request.*;
 import result.*;
 import dataaccess.*;
+import server.websocket.*;
 import service.*;
 import spark.*;
 import exception.ResponseException;
-import websocket.*;
 
+import java.net.http.WebSocket;
 import java.util.Collection;
 
 public class Server {
     private final ClearService clearService;
     private final GameService gameService;
     private final UserService userService;
+    private final WebSocketHandler webSocketHandler;
 
     //Constructor for StandardAPITests
     public Server(){
@@ -34,6 +36,7 @@ public class Server {
         clearService = new ClearService(authDAO, gameDAO, userDAO);
         gameService = new GameService(authDAO, gameDAO);
         userService = new UserService(authDAO, userDAO);
+        webSocketHandler = new WebSocketHandler();
     }
 
     //Constructor for SQL Server
@@ -42,12 +45,15 @@ public class Server {
         this.clearService = new ClearService(sql, sql, sql);
         this.gameService = new GameService(sql, sql);
         this.userService = new UserService(sql, sql);
+        this.webSocketHandler = new WebSocketHandler();
     }
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        Spark.webSocket("/connect", webSocketHandler);
 
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", this::clear);

@@ -2,11 +2,12 @@ package ui;
 
 import chess.ChessGame;
 import exception.ResponseException;
-import websocket.*;
 import model.*;
 import request.*;
 import result.*;
 import server.ServerFacade;
+import websocket.WebSocketFacade;
+import websocket.messages.ServerMessageHandler;
 
 import java.util.*;
 
@@ -14,16 +15,21 @@ public class Client {
     private String auth = null;
     private AuthData authData;
     private final ServerFacade server;
+    private final String serverURL;
+    private WebSocketFacade ws;
     private int state = 0;
     private int gameID = 0;
     private final Map<String, Integer> joinCodeToGameIDMap;
     private final Map<Integer, String> gameIDToJoinCodeMap;
+    private final ServerMessageHandler serverMessageHandler;
 
 
     //need to fix logout using last status if pressing enter
     //improve error messages from failure: 401
-    public Client(String serverURL) {
+    public Client(String serverURL, ServerMessageHandler serverMessageHandler) {
+        this.serverURL = serverURL;
         this.server = new ServerFacade(serverURL);
+        this.serverMessageHandler = serverMessageHandler;
         this.joinCodeToGameIDMap = new HashMap<>();
         this.gameIDToJoinCodeMap = new HashMap<>();
     }
@@ -117,6 +123,7 @@ public class Client {
     public String joinGame(String... params) throws ResponseException {
         if (authData != null) {
             if (params.length <= 2) {
+                this.ws = new WebSocketFacade(serverURL, serverMessageHandler);
                 AuthData info = new AuthData(auth, authData.username());
                 String playerColor = null;
                 int gameID = 0;
@@ -140,8 +147,10 @@ public class Client {
                     JoinGameRequest req = new JoinGameRequest(playerColor, gameID);
                     server.joinGame(info, req);
 
+                    ws.joinPlayer(info, gameID, teamColor);
                 } else {
                     String joinCode = params[0];
+                    ws.joinObserver(info, gameID);
                     if (joinCode.matches("[a-zA-Z0-9]+")) {
                         gameID = getGameIDFromJoinCode(joinCode);
                     } else {

@@ -5,6 +5,7 @@ import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import dataaccess.*;
 import exception.ResponseException;
 import model.*;
@@ -51,6 +52,11 @@ public class WebSocketHandler {
         String auth = cmd.getAuthString();
         connections.add(gameID, auth, session);
 
+        JsonObject authDataJson = new Gson().fromJson(auth, JsonObject.class);
+
+        String user = authDataJson.get("username").getAsString();
+        String authToken = authDataJson.get("authToken").getAsString();
+
         if (gameService.getGame(gameID) == null)
         {
             try {
@@ -66,7 +72,7 @@ public class WebSocketHandler {
         //check for errors
         GameData gameData = gameService.getGame(gameID);
         ChessGame game = gameData.game();
-        String username = gameService.getUsername(new AuthData(auth));
+        String username = gameService.getUsername(new AuthData(authToken, user));
         if (teamColor == ChessGame.TeamColor.WHITE)
         {
             if (!Objects.equals(gameData.whiteUsername(), username))
@@ -112,6 +118,12 @@ public class WebSocketHandler {
         int gameID = cmd.getGameID();
         String auth = cmd.getAuthString();
         connections.add(gameID, auth, session);
+
+        JsonObject authDataJson = new Gson().fromJson(auth, JsonObject.class);
+
+        String user = authDataJson.get("username").getAsString();
+        String authToken = authDataJson.get("authToken").getAsString();
+
         if (gameService.getGame(gameID) == null)
         {
             try {
@@ -138,7 +150,7 @@ public class WebSocketHandler {
 
         GameData gameData = gameService.getGame(gameID);
         ChessGame game = gameData.game();
-        String username = gameService.getUsername(new AuthData(auth));
+        String username = gameService.getUsername(new AuthData(authToken, user));
         var message1 = String.format("Player %s has joined as observer", username);
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
         var loadGameMessage = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
@@ -154,7 +166,12 @@ public class WebSocketHandler {
         MakeMoveCommand cmd = new Gson().fromJson(message, MakeMoveCommand.class);
         int gameID = cmd.getGameID();
         String auth = cmd.getAuthString();
-        String username = gameService.getUsername(new AuthData(auth));
+
+        JsonObject authDataJson = new Gson().fromJson(auth, JsonObject.class);
+        String user = authDataJson.get("username").getAsString();
+        String authToken = authDataJson.get("authToken").getAsString();
+
+        String username = gameService.getUsername(new AuthData(authToken, user));
         ChessGame game = gameService.getGame(gameID).game();
         GameData gameData = gameService.getGame(gameID);
         ChessMove move = cmd.getMove();
@@ -282,7 +299,12 @@ public class WebSocketHandler {
         LeaveCommand leaveCommand = new Gson().fromJson(message, LeaveCommand.class);
         int gameID = leaveCommand.getGameID();
         String auth = leaveCommand.getAuthString();
-        String username = gameService.getUsername(new AuthData(auth));
+
+        JsonObject authDataJson = new Gson().fromJson(auth, JsonObject.class);
+        String user = authDataJson.get("username").getAsString();
+        String authToken = authDataJson.get("authToken").getAsString();
+
+        String username = gameService.getUsername(new AuthData(authToken, user));
         var message1 = String.format("Player %s has left", username);
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
         try {
@@ -298,7 +320,12 @@ public class WebSocketHandler {
         ResignCommand resignCommand = new Gson().fromJson(message, ResignCommand.class);
         int gameID = resignCommand.getGameID();
         String auth = resignCommand.getAuthString();
-        String username = gameService.getUsername(new AuthData(auth));
+
+        JsonObject authDataJson = new Gson().fromJson(auth, JsonObject.class);
+        String user = authDataJson.get("username").getAsString();
+        String authToken = authDataJson.get("authToken").getAsString();
+
+        String username = gameService.getUsername(new AuthData(authToken, user));
         var message1 = String.format("Player %s has resigned", username);
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
 
