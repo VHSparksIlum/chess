@@ -19,6 +19,7 @@ public class Client {
     private WebSocketFacade ws;
     private int state = 0;
     private int gameID = 0;
+    private ChessGame chessGame;
     private final Map<String, Integer> joinCodeToGameIDMap;
     private final Map<Integer, String> gameIDToJoinCodeMap;
     private final ServerMessageHandler serverMessageHandler;
@@ -49,6 +50,12 @@ public class Client {
                 case "draw" -> drawCombined();
                 case "quit" -> "quit";
                 case "help" -> help();
+                //GAMEPLAY
+                //case "draw" -> drawBoard(chessGame);
+                case "move" -> makeMove(params);
+                case "leave" -> leaveGame();
+                case "resign" -> resignGame();
+                case "highlight" -> highlightMoves(chessGame, params);
                 default -> "";
             };
         } catch (ResponseException ex) {
@@ -210,6 +217,25 @@ public class Client {
         }
     }
 
+    public String highlightMoves(ChessGame chessGame, String... params) {
+        return "Not Implemented";
+        //return GameplayHelper.highlightMoves(game, params);
+    }
+
+    public String makeMove(String... params) throws ResponseException {
+        return "Not Implemented";
+        //return GameplayHelper.makeMove(serverURL, serverMessageHandler, authData, gameID, params);
+    }
+
+    public String leaveGame() throws ResponseException {
+        return "Not Implemented";
+        //return GameplayHelper.leaveGame(serverURL, serverMessageHandler, authData, gameID);
+    }
+
+    public String resignGame() throws ResponseException {
+        return "Not Implemented";
+        //return GameplayHelper.resignGame(serverURL, serverMessageHandler, authData, gameID);
+    }
 
     public String drawBoardWhite() {
         String[][] board = new String[8][8];
@@ -354,6 +380,11 @@ public class Client {
                 - Quit
                 - Help
                 """;
+//        - Move - make a move <start-position> <end-position>
+//                - Highlight - highlight moves for a piece <piece-position>
+//                - Leave - leave the game
+//        - Resign - Forfeit the game (you will be given a loss and game will be ended)
+
     }
     public int getState () { return state; }
 
