@@ -1,5 +1,6 @@
 package dataaccess.memory;
 
+import chess.ChessGame;
 import dataaccess.GameDAO;
 import model.AuthData;
 import model.GameData;
@@ -39,6 +40,12 @@ public class MemoryGameDAO implements GameDAO {
         GameData updatedGame = getGameData(playerColor, game, username);
 
         games.put(gameID, updatedGame);
+    }
+
+
+    @Override
+    public void makeMove(int gameID, ChessGame game) {
+
     }
 
     private static GameData getGameData(String playerColor, GameData game, String username) {
