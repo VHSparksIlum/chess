@@ -107,30 +107,4 @@ public class Repl implements ServerMessageHandler  {
         }
         return "ERROR";
     }
-
-    @Override
-    public void handle(String message) {
-        ServerMessage sm = new Gson().fromJson(message, ServerMessage.class);
-        switch (sm.getServerMessageType()) {
-            case ERROR:
-            {
-                ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
-                System.out.println(errorMessage.getErrorMessage());
-                break;
-            }
-            case NOTIFICATION: {
-                Notification notification = new Gson().fromJson(message, Notification.class);
-                System.out.println("\n" + EscapeSequences.SET_TEXT_COLOR_BLUE + notification.getMessage());
-                printPrompt();
-                break;
-            }
-            case LOAD_GAME: {
-                LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
-                System.out.println(EscapeSequences.SET_BG_COLOR_WHITE + EscapeSequences.SET_TEXT_COLOR_BLACK + client.drawBoardWhite()); //client.drawBoard(loadGameMessage.getGame())
-                System.out.println(EscapeSequences.SET_BG_COLOR_BLACK);
-                printPrompt();
-                break;
-            }
-        }
-    }
 }
