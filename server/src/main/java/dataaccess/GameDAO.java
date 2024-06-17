@@ -1,5 +1,6 @@
 package dataaccess;
 
+import chess.ChessGame;
 import model.AuthData;
 import model.GameData;
 
@@ -15,6 +16,8 @@ public interface GameDAO {
     //may need to be passed new instance rather than GameData game
     void joinGame(int gameID, String playerColor, AuthData auth);
 //    GameData joinGame(String username, Integer gameID, String playerColor, GameData game);
+
+    void makeMove(int gameID, ChessGame game);
 
     void clear();
 }

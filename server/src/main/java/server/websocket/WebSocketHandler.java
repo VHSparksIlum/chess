@@ -65,11 +65,11 @@ public class WebSocketHandler {
         ChessGame.TeamColor teamColor = cmd.getPlayerColor();
         //check for errors
         GameData gameData = gameService.getGame(gameID);
-        ChessGame game = gameData.getGame();
+        ChessGame game = gameData.game();
         String username = gameService.getUsername(new AuthData(auth));
         if (teamColor == ChessGame.TeamColor.WHITE)
         {
-            if (!Objects.equals(gameData.getWhiteUsername(), username))
+            if (!Objects.equals(gameData.whiteUsername(), username))
             {
                 try {
                     connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Already taken!!"));
@@ -83,7 +83,7 @@ public class WebSocketHandler {
 
         if (teamColor == ChessGame.TeamColor.BLACK)
         {
-            if (!Objects.equals(gameData.getBlackUsername(), username))
+            if (!Objects.equals(gameData.blackUsername(), username))
             {
                 try {
                     connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Already taken!!"));
@@ -122,18 +122,22 @@ public class WebSocketHandler {
             return;
         }
 
-        if (!gameService.checkAuth(new AuthData(auth)))
-        {
-            try {
-                connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: bad auth"));
-            } catch (IOException e) {
-                throw new ResponseException(500, e.getMessage());
+        try {
+            if (!GameService.checkAuthToken(auth))
+            {
+                try {
+                    connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: bad auth"));
+                } catch (IOException e) {
+                    throw new ResponseException(500, e.getMessage());
+                }
+                return;
             }
-            return;
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
         }
 
         GameData gameData = gameService.getGame(gameID);
-        ChessGame game = gameData.getGame();
+        ChessGame game = gameData.game();
         String username = gameService.getUsername(new AuthData(auth));
         var message1 = String.format("Player %s has joined as observer", username);
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
@@ -151,13 +155,13 @@ public class WebSocketHandler {
         int gameID = cmd.getGameID();
         String auth = cmd.getAuthString();
         String username = gameService.getUsername(new AuthData(auth));
-        ChessGame game = gameService.getGame(gameID).getGame();
+        ChessGame game = gameService.getGame(gameID).game();
         GameData gameData = gameService.getGame(gameID);
         ChessMove move = cmd.getMove();
         ChessPiece piece = game.getBoard().getPiece(move.getStartPosition());
 
         try {
-            gameService.makeMove(gameID, new AuthData(auth), move);
+            gameService.makeMove(gameID, new AuthData(auth, username), move);
         } catch (ResponseException e) {
             try {
                 connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: bad move"));
@@ -167,8 +171,8 @@ public class WebSocketHandler {
             return;
         }
 
-        if ((game.getTeamTurn() == ChessGame.TeamColor.WHITE && !(Objects.equals(gameData.getWhiteUsername(), username))) ||
-                (game.getTeamTurn() == ChessGame.TeamColor.BLACK && !(Objects.equals(gameData.getBlackUsername(), username))))
+        if ((game.getTeamTurn() == ChessGame.TeamColor.WHITE && !(Objects.equals(gameData.whiteUsername(), username))) ||
+                (game.getTeamTurn() == ChessGame.TeamColor.BLACK && !(Objects.equals(gameData.blackUsername(), username))))
         {
             try {
                 connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: not your turn"));
@@ -181,7 +185,7 @@ public class WebSocketHandler {
 
         var message1 = String.format("Player %s has moved %s from %s to %s", username, piece.getPieceType().toString(), convertPos(move.getStartPosition()), convertPos(move.getEndPosition()));
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
-        game = gameService.getGame(gameID).getGame();
+        game = gameService.getGame(gameID).game();
         var loadGameMessage = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
 
         if (game.isInCheck(ChessGame.TeamColor.BLACK)
@@ -205,7 +209,7 @@ public class WebSocketHandler {
         if (game.isInCheckmate(ChessGame.TeamColor.BLACK))
         {
             game.setTeamTurn(null);
-            gameService.setGame(gameID, new AuthData(auth) , game);
+            gameService.setGame(gameID, new AuthData(auth, username), game);
             var endGameNotification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, "White wins!");
             try {
                 connections.broadcast(gameID, null, endGameNotification);
@@ -216,7 +220,7 @@ public class WebSocketHandler {
         if (game.isInCheckmate(ChessGame.TeamColor.WHITE))
         {
             game.setTeamTurn(null);
-            gameService.setGame(gameID, new AuthData(auth) , game);
+            gameService.setGame(gameID, new AuthData(auth, username) , game);
             var endGameNotification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, "Black wins!");
             try {
                 connections.broadcast(gameID, null, endGameNotification);
@@ -299,7 +303,7 @@ public class WebSocketHandler {
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message1);
 
         GameData gameData = gameService.getGame(gameID);
-        if (!Objects.equals(username, gameData.getBlackUsername()) && !Objects.equals(username, gameData.getWhiteUsername()))
+        if (!Objects.equals(username, gameData.blackUsername()) && !Objects.equals(username, gameData.whiteUsername()))
         {
             try {
                 connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: not in game"));
@@ -309,7 +313,7 @@ public class WebSocketHandler {
             return;
         }
 
-        if (gameData.getGame().getTeamTurn() == null)
+        if (gameData.game().getTeamTurn() == null)
         {
             try {
                 connections.sendError(auth, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: game is over"));
@@ -319,9 +323,9 @@ public class WebSocketHandler {
             return;
         }
 
-        ChessGame game = gameService.getGame(gameID).getGame();
+        ChessGame game = gameService.getGame(gameID).game();
         game.setTeamTurn(null);
-        gameService.setGame(gameID, new AuthData(auth), game);
+        gameService.setGame(gameID, new AuthData(auth, username), game);
         try {
             connections.broadcast(gameID, null, notification);
         } catch (Exception e) {

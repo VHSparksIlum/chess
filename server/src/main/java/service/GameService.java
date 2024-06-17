@@ -1,8 +1,13 @@
 package service;
 
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.InvalidMoveException;
+import exception.ResponseException;
 import model.*;
 import dataaccess.*;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 
@@ -64,10 +69,60 @@ public class GameService {
         return gameDAO.listGames();
     }
 
-    private static boolean checkAuthToken(String authToken) throws DataAccessException {
+    public static boolean checkAuthToken(String authToken) throws DataAccessException {
         if(authDAO.getAuth(authToken)==null){
             throw new DataAccessException("unauthorized");
         }
         return true;
+    }
+
+    public String getUsername(AuthData auth) throws ResponseException {
+        try {
+            return SqlDataAccess.getUsername(auth);
+        } catch (SQLException e) {
+            throw new ResponseException(500, e.getMessage());
+        }
+    }
+
+    public void makeMove(int gameID, AuthData auth, ChessMove move) throws ResponseException
+    {
+        if (gameDAO.getGame(gameID) == null) {
+            throw new ResponseException(400, "No game with that ID");
+        }
+        try {
+            if (!checkAuthToken(auth.authToken())) {
+                throw new ResponseException(401, "Unauthorized");
+            }
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+        GameData gameData = getGame(gameID);
+        ChessGame game = gameData.game();
+        try {
+            game.makeMove(move);
+        } catch (InvalidMoveException e) {
+            throw new ResponseException(500, "Invalid move");
+        }
+        gameDAO.makeMove(gameID, game);
+    }
+
+    public void setGame(int gameID, AuthData auth, ChessGame game) throws ResponseException
+    {
+        if (gameDAO.getGame(gameID) == null) {
+            throw new ResponseException(400, "No game with that ID");
+        }
+        try {
+            if (!checkAuthToken(auth.authToken())) {
+                throw new ResponseException(401, "Unauthorized");
+            }
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+        gameDAO.makeMove(gameID, game);
+    }
+
+    public GameData getGame(int gameID)
+    {
+        return gameDAO.getGame(gameID);
     }
 }

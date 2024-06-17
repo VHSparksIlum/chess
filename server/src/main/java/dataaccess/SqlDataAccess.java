@@ -2,6 +2,8 @@ package dataaccess;
 
 import chess.ChessGame;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -230,6 +232,19 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
         }
     }
 
+    public void makeMove(int gameID, ChessGame game) {
+        try {
+            Gson gson = new GsonBuilder().serializeNulls().create();
+            GameData gameData = getGame(gameID);
+            GameData newData = new GameData(gameID, gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), game);
+            var statement = "UPDATE games SET game=?, json=? WHERE id=?";
+            executeUpdate(statement, gson.toJson(game), gson.toJson(newData), gameID);
+            System.out.println("updated");
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public UserData getUser(String username) {
         try (var conn = DatabaseManager.getConnection()) {
@@ -295,7 +310,7 @@ public class SqlDataAccess implements AuthDAO, GameDAO, UserDAO {
     }
 
 
-    private static String getUsername(AuthData authData) throws SQLException {
+    public static String getUsername(AuthData authData) throws SQLException {
         String username = "";
         try (var conn = DatabaseManager.getConnection()) {
             var statement = "SELECT username FROM auth WHERE authToken=?";
